@@ -1,0 +1,370 @@
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from datetime import datetime, timedelta
+import os
+import re
+import requests as http_requests
+
+from app import db, bcrypt
+from models import (
+    User, Club, ClubMembership, ClubMessage,
+    Post, PostComment, AmbassadorApplication, Feedback, AISession, Job,
+)
+
+auth_bp = Blueprint("auth", __name__)
+
+ABSTRACT_API_KEY = os.environ.get("ABSTRACT_EMAIL_API_KEY", "")
+
+
+def _email_valid(email: str) -> bool:
+    return bool(re.match(r"[^@]+@[^@]+\.[^@]+", email))
+
+
+def _verify_email_deliverable(email: str) -> tuple[bool, str]:
+    """Check email deliverability via Abstract API Email Reputation.
+    Returns (is_valid, error_message). If API key not set, skips check."""
+    if not ABSTRACT_API_KEY:
+        return True, ""
+    try:
+        resp = http_requests.get(
+            "https://emailreputation.abstractapi.com/v1/",
+            params={"api_key": ABSTRACT_API_KEY, "email": email},
+            timeout=5,
+        )
+        if resp.status_code != 200:
+            return True, ""  # fail open — don't block on API errors
+        data = resp.json()
+        details = data.get("details", {})
+        if details.get("disposable"):
+            return False, "Vaqtinchalik (disposable) email manzillaridan foydalanish mumkin emas. Iltimos, haqiqiy email manzilingizni kiriting."
+        if details.get("deliverable") is False:
+            return False, "Bu email manzili mavjud emasga o'xshaydi. Iltimos, haqiqiy email manzilingizni kiriting."
+        return True, ""
+    except Exception:
+        return True, ""  # fail open on network errors
+
+
+@auth_bp.route("/check-email", methods=["GET"])
+def check_email():
+    email = (request.args.get("email") or "").strip().lower()
+    if not email or not _email_valid(email):
+        return jsonify({"exists": False, "valid": False, "message": "Email formati noto'g'ri."}), 200
+
+    exists = User.query.filter_by(email=email).first() is not None
+    if exists:
+        return jsonify({"exists": True, "valid": False, "message": "Bu email bilan hisob allaqachon mavjud."}), 200
+
+    is_valid, error_msg = _verify_email_deliverable(email)
+    if not is_valid:
+        return jsonify({"exists": False, "valid": False, "message": error_msg}), 200
+
+    return jsonify({"exists": False, "valid": True, "message": ""}), 200
+
+
+@auth_bp.route("/register", methods=["POST"])
+def register():
+    data = request.get_json(silent=True) or {}
+
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+    university = (data.get("university") or "").strip()
+    funding_type = (data.get("funding_type") or "").strip()
+    region = (data.get("region") or "").strip()
+
+    if not name or not email or not password:
+        return jsonify({"error": "Ism, email va parol kiritilishi shart."}), 400
+
+    if not _email_valid(email):
+        return jsonify({"error": "Email manzili noto'g'ri."}), 400
+
+    if len(password) < 6:
+        return jsonify({"error": "Parol kamida 6 ta belgidan iborat bo'lishi kerak."}), 400
+
+    if User.query.filter_by(email=email).first():
+        return jsonify({"error": "Bu email bilan hisob allaqachon mavjud."}), 409
+
+    password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
+
+    user = User(
+        name=name,
+        email=email,
+        password_hash=password_hash,
+        university=university,
+        funding_type=funding_type,
+        region=region,
+    )
+    db.session.add(user)
+    db.session.commit()
+
+    access_token = create_access_token(identity=str(user.id))
+
+    return jsonify({
+        "message": "Hisob muvaffaqiyatli yaratildi.",
+        "token": access_token,
+        "user": user.to_dict(),
+    }), 201
+
+
+@auth_bp.route("/login", methods=["POST"])
+def login():
+    data = request.get_json(silent=True) or {}
+
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+
+    if not email or not password:
+        return jsonify({"error": "Email va parol kiritilishi shart."}), 400
+
+    user = User.query.filter_by(email=email).first()
+
+    if not user or not bcrypt.check_password_hash(user.password_hash, password):
+        return jsonify({"error": "Email yoki parol noto'g'ri."}), 401
+
+    user.last_seen = datetime.utcnow()
+    db.session.commit()
+
+    access_token = create_access_token(identity=str(user.id))
+
+    return jsonify({
+        "message": "Tizimga muvaffaqiyatli kirdingiz.",
+        "token": access_token,
+        "user": user.to_dict(),
+    }), 200
+
+
+@auth_bp.route("/google", methods=["POST"])
+def google_auth():
+    """Sign in / sign up with a Google OAuth access token.
+
+    Frontend sends {access_token, mode} where mode is "login" or "register".
+    - mode="login": only signs in existing users. Returns 404 if no account
+      so the frontend can prompt the user to sign up.
+    - mode="register": creates a new account. Returns 409 if account already
+      exists so the frontend can prompt the user to sign in instead.
+    - mode missing/other: legacy behaviour — find-or-create (kept for
+      backwards compatibility, used by older clients).
+    """
+    data = request.get_json(silent=True) or {}
+    access_token = (data.get("access_token") or "").strip()
+    mode = (data.get("mode") or "").strip().lower()
+
+    if not access_token:
+        return jsonify({"error": "Google access token talab qilinadi."}), 400
+
+    # ── Verify token with Google ──────────────────────────────────────────────
+    try:
+        resp = http_requests.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=10,
+        )
+    except Exception:
+        return jsonify({"error": "Google serverlariga ulanib bo'lmadi. Qayta urinib ko'ring."}), 503
+
+    if resp.status_code != 200:
+        return jsonify({"error": "Google token yaroqsiz yoki muddati o'tgan."}), 401
+
+    info = resp.json()
+    email = (info.get("email") or "").strip().lower()
+    name  = (info.get("name") or info.get("given_name") or "").strip()
+    if not name:
+        name = email.split("@")[0]
+
+    if not email:
+        return jsonify({"error": "Google'dan email manzilini olib bo'lmadi."}), 400
+
+    # ── Email verified check ──────────────────────────────────────────────────
+    if not info.get("email_verified", False):
+        return jsonify({
+            "error": "Google email manzilingiz tasdiqlanmagan. "
+                     "Iltimos, avval Google hisobingizni tasdiqlang, so'ngra qayta urinib ko'ring."
+        }), 400
+
+    # ── Branch on mode ────────────────────────────────────────────────────────
+    user = User.query.filter_by(email=email).first()
+    created = False  # whether we created a new user in this call
+
+    if mode == "login":
+        # Strict sign-in: refuse to auto-create an account.
+        if not user:
+            return jsonify({
+                "error": "Bu Google email bilan bog'langan TALABA hisobi topilmadi. "
+                         "Iltimos, avval ro'yxatdan o'ting.",
+                "code": "NO_ACCOUNT",
+            }), 404
+
+    elif mode == "register":
+        # Strict sign-up: refuse to silently sign in an existing user.
+        if user:
+            return jsonify({
+                "error": "Bu Google email uchun TALABA hisobi allaqachon mavjud. "
+                         "Iltimos, tizimga kiring.",
+                "code": "ACCOUNT_EXISTS",
+            }), 409
+        user = User(
+            name=name,
+            email=email,
+            password_hash="",        # no password — Google-only account
+            is_verified=True,        # Google has already verified the email
+        )
+        db.session.add(user)
+        db.session.commit()
+        created = True
+
+    else:
+        # Legacy / unspecified mode: keep find-or-create behaviour.
+        if not user:
+            user = User(
+                name=name,
+                email=email,
+                password_hash="",
+                is_verified=True,
+            )
+            db.session.add(user)
+            db.session.commit()
+            created = True
+
+    # Touch last_seen if the column exists (returning users).
+    if hasattr(user, "last_seen"):
+        user.last_seen = datetime.utcnow()
+        db.session.commit()
+
+    # Tell the frontend whether the user's profile is still missing the
+    # required onboarding info (university / funding_type / region) so it
+    # can redirect to the onboarding page instead of straight to /dashboard.
+    profile_complete = bool(
+        (user.university or "").strip() and
+        (user.region or "").strip() and
+        (user.funding_type or "").strip()
+    )
+
+    jwt_token = create_access_token(
+        identity=str(user.id),
+        expires_delta=timedelta(days=30),
+    )
+    return jsonify({
+        "message": f"Xush kelibsiz, {user.name}!",
+        "token": jwt_token,
+        "user": user.to_dict(),
+        "created": created,
+        "profile_complete": profile_complete,
+    }), 200
+
+
+@auth_bp.route("/me", methods=["GET"])
+@jwt_required()
+def me():
+    user_id = int(get_jwt_identity())
+    user = User.query.get_or_404(user_id)
+    return jsonify({"user": user.to_dict()}), 200
+
+
+@auth_bp.route("/me", methods=["PATCH"])
+@jwt_required()
+def update_me():
+    user_id = int(get_jwt_identity())
+    user = User.query.get_or_404(user_id)
+    data = request.get_json(silent=True) or {}
+
+    for field in ("name", "university", "funding_type", "region"):
+        value = data.get(field)
+        if value is not None:
+            setattr(user, field, value.strip())
+
+    db.session.commit()
+    return jsonify({"user": user.to_dict()}), 200
+
+
+# ── Delete account (permanent, cascade) ─────────────────────────────────────
+
+@auth_bp.route("/me", methods=["DELETE"])
+@jwt_required()
+def delete_me():
+    """Permanently delete the authenticated user and ALL their data.
+
+    Requires the client to send {"confirm": "DELETE"} in the body OR
+    as a query param (?confirm=DELETE) as a safety guard against
+    accidental calls.
+    """
+    import traceback
+
+    user_id = int(get_jwt_identity())
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "Hisob topilmadi. U allaqachon o'chirilgan bo'lishi mumkin."}), 404
+
+    # Accept the confirm token from either the JSON body or query string —
+    # some HTTP clients drop the body on DELETE requests.
+    data = request.get_json(silent=True) or {}
+    confirm = data.get("confirm") or request.args.get("confirm")
+    if confirm != "DELETE":
+        return jsonify({
+            "error": "Hisobni o'chirishni tasdiqlash uchun {\"confirm\": \"DELETE\"} yuboring."
+        }), 400
+
+    try:
+        # 1) Comments authored by the user (drop first to avoid FK issues).
+        PostComment.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+
+        # 2) Posts authored by the user (and their comments).
+        user_post_ids = [p.id for p in Post.query.filter_by(user_id=user_id).all()]
+        if user_post_ids:
+            PostComment.query.filter(PostComment.post_id.in_(user_post_ids))\
+                .delete(synchronize_session=False)
+            Post.query.filter(Post.id.in_(user_post_ids)).delete(synchronize_session=False)
+
+        # 3) Chat messages and memberships.
+        ClubMessage.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+        ClubMembership.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+
+        # 4) Clubs the user CREATED — cascade their messages, memberships,
+        #    posts and comments tied to those clubs.
+        owned_club_ids = [c.id for c in Club.query.filter_by(created_by=user_id).all()]
+        if owned_club_ids:
+            ClubMessage.query.filter(ClubMessage.club_id.in_(owned_club_ids))\
+                .delete(synchronize_session=False)
+            ClubMembership.query.filter(ClubMembership.club_id.in_(owned_club_ids))\
+                .delete(synchronize_session=False)
+            club_post_ids = [p.id for p in Post.query.filter(Post.club_id.in_(owned_club_ids)).all()]
+            if club_post_ids:
+                PostComment.query.filter(PostComment.post_id.in_(club_post_ids))\
+                    .delete(synchronize_session=False)
+                Post.query.filter(Post.id.in_(club_post_ids)).delete(synchronize_session=False)
+            Club.query.filter(Club.id.in_(owned_club_ids)).delete(synchronize_session=False)
+
+        # 5) Jobs the user created — set created_by to NULL so postings survive
+        #    (don't lose career data when the poster deletes their account).
+        Job.query.filter_by(created_by=user_id).update(
+            {"created_by": None}, synchronize_session=False
+        )
+
+        # 6) Feedback they submitted while signed in — anonymise instead of deleting
+        #    so admins keep historical comments.
+        Feedback.query.filter_by(user_id=user_id).update(
+            {"user_id": None}, synchronize_session=False
+        )
+
+        # 7) Ambassador application (by email match).
+        if user.email:
+            AmbassadorApplication.query.filter_by(email=user.email).delete(
+                synchronize_session=False
+            )
+
+        # 8) AI sessions.
+        AISession.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+
+        # 9) Finally, the user.
+        db.session.delete(user)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        # Log full traceback to Render logs for debugging.
+        print(f"[delete_me] failed for user_id={user_id}: {e}")
+        traceback.print_exc()
+        return jsonify({
+            "error": "Server xatoligi tufayli hisobingizni o'chirib bo'lmadi. "
+                     "Qayta urinib ko'ring — agar muammo davom etsa, qo'llab-quvvatlash xizmatiga murojaat qiling."
+        }), 500
+
+    return jsonify({"message": "Hisobingiz va unga tegishli barcha ma'lumotlar o'chirildi."}), 200

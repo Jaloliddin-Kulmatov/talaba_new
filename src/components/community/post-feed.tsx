@@ -1,0 +1,552 @@
+"use client";
+
+import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  Send, Trash2, Globe, Building2, Users, ChevronDown,
+  Loader2, MessageSquare, Lock, LogIn, CornerDownRight, Bookmark, Star,
+} from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { formatRelativeTime } from "@/lib/utils";
+import { Bookmarks } from "@/lib/bookmarks";
+import Link from "next/link";
+import AmbassadorModal from "@/components/ui/ambassador-modal";
+
+const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+
+function token() {
+  return typeof window !== "undefined" ? localStorage.getItem("talaba_token") : null;
+}
+
+type PostAsOption = { type: "user" | "university" | "club" | "community"; label: string; club_id: number | null };
+
+type Comment = {
+  id: number; post_id: number; user_id: number;
+  parent_id: number | null;
+  author_name: string; content: string; created_at: string;
+};
+
+type Post = {
+  id: number; user_id: number; author_name: string;
+  content: string; posted_as_type: "user" | "university" | "club" | "community";
+  posted_as_label: string | null; club_id: number | null;
+  created_at: string; comment_count: number;
+};
+
+const POSTED_AS_LABELS_UZ: Record<string, string> = {
+  university: "universitet", club: "klub", community: "jamiyat", user: "foydalanuvchi",
+};
+
+function PostAsIcon({ type }: { type: string }) {
+  if (type === "university") return <Building2 size={11} />;
+  if (type === "club") return <Users size={11} />;
+  if (type === "community") return <Globe size={11} />;
+  return <Globe size={11} />;
+}
+
+// ── Inline Threaded Comments ──────────────────────────────────────
+
+function renderContent(text: string) {
+  return text.split(/(@\S+)/g).map((part, i) =>
+    part.startsWith("@")
+      ? <span key={i} className="text-blue-600 dark:text-blue-400 font-medium">{part}</span>
+      : part
+  );
+}
+
+function CommentItem({
+  comment, replies, currentUserId, replyToId,
+  onReply, onCancelReply, indent = false,
+}: {
+  comment: Comment;
+  replies: Comment[];
+  currentUserId?: number;
+  replyToId: number | null;
+  onReply: (c: Comment) => void;
+  onCancelReply: () => void;
+  indent?: boolean;
+}) {
+  const isReplying = replyToId === comment.id;
+  return (
+    <div className={indent ? "ml-8 mt-2" : ""}>
+      <div className="flex gap-2 items-start">
+        <div className={`rounded-lg bg-gradient-to-br ${
+          comment.user_id === currentUserId
+            ? "from-blue-500 to-emerald-600"
+            : "from-slate-400 to-slate-600"
+        } flex items-center justify-center text-white text-[10px] font-bold shrink-0 mt-0.5 ${
+          indent ? "w-5 h-5" : "w-6 h-6"
+        }`}>
+          {comment.author_name[0]?.toUpperCase()}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="bg-muted rounded-xl px-3 py-2 inline-block max-w-full">
+            <span className="text-[10px] font-semibold text-foreground">{comment.author_name} </span>
+            <span className="text-xs text-foreground/80 break-words whitespace-pre-wrap">
+              {renderContent(comment.content)}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 px-1 mt-0.5">
+            <p className="text-[9px] text-muted-foreground">{formatRelativeTime(comment.created_at)}</p>
+            {currentUserId && (
+              <button
+                onClick={() => isReplying ? onCancelReply() : onReply(comment)}
+                className={`flex items-center gap-0.5 text-[10px] font-semibold transition-colors ${
+                  isReplying
+                    ? "text-blue-500"
+                    : "text-muted-foreground hover:text-blue-500"
+                }`}
+              >
+                <CornerDownRight size={10} />
+                {isReplying ? "Bekor qilish" : "Javob berish"}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Nested replies */}
+      {replies.length > 0 && (
+        <div className="space-y-2 mt-2">
+          {replies.map(r => (
+            <CommentItem
+              key={r.id}
+              comment={r}
+              replies={[]}
+              currentUserId={currentUserId}
+              replyToId={replyToId}
+              onReply={onReply}
+              onCancelReply={onCancelReply}
+              indent
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PostComments({ postId }: { postId: number }) {
+  const { user } = useAuth();
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [input, setInput] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [replyTo, setReplyTo] = useState<{ id: number; name: string } | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch(`${API}/posts/${postId}/comments`, {
+      headers: { Authorization: `Bearer ${token()}` },
+    })
+      .then(r => r.json())
+      .then(d => { setComments(d.comments || []); setLoading(false); });
+  }, [postId]);
+
+  // Group comments: top-level + their replies
+  const topLevel = comments.filter(c => !c.parent_id);
+  const repliesByParent = comments.reduce<Record<number, Comment[]>>((acc, c) => {
+    if (c.parent_id) {
+      (acc[c.parent_id] ||= []).push(c);
+    }
+    return acc;
+  }, {});
+
+  const focusReply = (c: Comment) => {
+    setReplyTo({ id: c.id, name: c.author_name });
+    setInput(`@${c.author_name} `);
+    setTimeout(() => {
+      inputRef.current?.focus();
+      const len = `@${c.author_name} `.length;
+      inputRef.current?.setSelectionRange(len, len);
+    }, 50);
+  };
+
+  const cancelReply = () => {
+    setReplyTo(null);
+    setInput("");
+  };
+
+  const addComment = async () => {
+    const text = input.trim();
+    if (!text || posting) return;
+    setPosting(true);
+    const body: { content: string; parent_id?: number } = { content: text };
+    if (replyTo) body.parent_id = replyTo.id;
+    const res = await fetch(`${API}/posts/${postId}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+      body: JSON.stringify(body),
+    });
+    const d = await res.json();
+    if (d.comment) {
+      setComments(prev => [...prev, d.comment]);
+      setInput("");
+      setReplyTo(null);
+    }
+    setPosting(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="mt-3 pt-3 border-t border-border flex justify-center py-3">
+        <Loader2 size={14} className="animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 pt-3 border-t border-border space-y-3">
+      {comments.length === 0 && (
+        <p className="text-xs text-center text-muted-foreground py-1">Hali izoh yo'q. Birinchi bo'ling!</p>
+      )}
+
+      {topLevel.map(c => (
+        <CommentItem
+          key={c.id}
+          comment={c}
+          replies={repliesByParent[c.id] || []}
+          currentUserId={user?.id}
+          replyToId={replyTo?.id ?? null}
+          onReply={focusReply}
+          onCancelReply={cancelReply}
+        />
+      ))}
+
+      {user && (
+        <div className="pt-1 space-y-1.5">
+          {replyTo && (
+            <div className="flex items-center gap-1.5 pl-8 text-[10px] text-blue-500">
+              <CornerDownRight size={10} />
+              <span><strong>@{replyTo.name}</strong> ga javob</span>
+              <button onClick={cancelReply} className="ml-1 text-muted-foreground hover:text-foreground transition-colors">✕</button>
+            </div>
+          )}
+          <div className={`flex items-center gap-2 ${replyTo ? "ml-8" : ""}`}>
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500 to-emerald-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+              {user.name?.[0]?.toUpperCase() || "?"}
+            </div>
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={e => {
+                setInput(e.target.value);
+                if (replyTo && !e.target.value.startsWith(`@${replyTo.name}`)) setReplyTo(null);
+              }}
+              onKeyDown={e => {
+                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addComment(); }
+                if (e.key === "Escape") cancelReply();
+              }}
+              placeholder={replyTo ? `@${replyTo.name} ga javob…` : "Izoh yozing…"}
+              className="flex-1 bg-muted rounded-xl px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+            />
+            <button
+              onClick={addComment}
+              disabled={posting || !input.trim()}
+              className="p-1.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-40 shrink-0"
+            >
+              {posting ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Post Card ─────────────────────────────────────────────────────
+
+function PostCard({ post, currentUserId, onDelete }: {
+  post: Post; currentUserId?: number; onDelete: (id: number) => void;
+}) {
+  const label = post.posted_as_label || post.author_name;
+  const isOwn = post.user_id === currentUserId;
+  const [showComments, setShowComments] = useState(false);
+  const [commentCount, setCommentCount] = useState(post.comment_count);
+  const [saved, setSaved] = useState(() => Bookmarks.posts.has(post.id));
+
+  const avatarLetter = label[0]?.toUpperCase() ?? "?";
+  const gradients: Record<string, string> = {
+    university: "from-blue-500 to-emerald-600",
+    club: "from-emerald-500 to-cyan-600",
+    community: "from-violet-500 to-purple-600",
+    user: "from-slate-500 to-slate-700",
+  };
+
+  return (
+    <div className="p-4 rounded-2xl border border-border bg-card group">
+      <div className="flex items-start gap-3">
+        <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${gradients[post.posted_as_type]} flex items-center justify-center text-white text-sm font-bold shrink-0`}>
+          {avatarLetter}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <span className="text-sm font-semibold text-foreground">{label}</span>
+            <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium border ${
+              post.posted_as_type === "university" ? "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20" :
+              post.posted_as_type === "club"       ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+              post.posted_as_type === "community"  ? "text-violet-600 dark:text-violet-400 bg-violet-500/10 border-violet-500/20" :
+                                                    "text-muted-foreground bg-muted border-border"
+            }`}>
+              <PostAsIcon type={post.posted_as_type} />
+              {POSTED_AS_LABELS_UZ[post.posted_as_type]}
+            </span>
+            {post.posted_as_type !== "user" && (
+              <span className="text-[10px] text-muted-foreground">muallif: {post.author_name}</span>
+            )}
+            <span className="text-[10px] text-muted-foreground ml-auto">{formatRelativeTime(post.created_at)}</span>
+          </div>
+          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">{post.content}</p>
+        </div>
+        {isOwn && (
+          <button onClick={() => onDelete(post.id)} className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0">
+            <Trash2 size={13} />
+          </button>
+        )}
+      </div>
+
+      {/* Comment toggle + bookmark */}
+      <div className="mt-3 pt-2.5 border-t border-border/60 flex items-center gap-3">
+        <button
+          onClick={() => setShowComments(v => !v)}
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          <MessageSquare size={13} />
+          <span>{commentCount > 0 ? `${commentCount} ta izoh` : "Izoh"}</span>
+          <ChevronDown size={12} className={`transition-transform ${showComments ? "rotate-180" : ""}`} />
+        </button>
+        <button
+          onClick={() => setSaved(Bookmarks.posts.toggle({
+            id: post.id, author_name: post.author_name, content: post.content,
+            created_at: post.created_at, posted_as_label: post.posted_as_label,
+            posted_as_type: post.posted_as_type,
+          }))}
+          className={`flex items-center gap-1 text-xs transition-colors ml-auto ${
+            saved ? "text-blue-500" : "text-muted-foreground hover:text-blue-500"
+          }`}
+        >
+          <Bookmark size={13} className={saved ? "fill-blue-500" : ""} />
+          {saved ? "Saqlangan" : "Saqlash"}
+        </button>
+      </div>
+
+      {showComments && (
+        <PostComments postId={post.id} />
+      )}
+    </div>
+  );
+}
+
+// ── Main PostFeed ─────────────────────────────────────────────────
+
+export default function PostFeed() {
+  const { user } = useAuth();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [locked, setLocked] = useState(false);
+  const [options, setOptions] = useState<PostAsOption[]>([]);
+  const [selectedOption, setSelectedOption] = useState<PostAsOption | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
+  const [content, setContent] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+  const [showAmbassador, setShowAmbassador] = useState(false);
+
+  const fetchPosts = useCallback(async () => {
+    const t = token();
+    const res = await fetch(`${API}/posts`, {
+      headers: t ? { Authorization: `Bearer ${t}` } : {},
+    });
+    const d = await res.json();
+    if (d.locked) { setLocked(true); setLoadingPosts(false); return; }
+    const sorted = (d.posts || []).slice().sort((a: Post, b: Post) => {
+      const ageA = (Date.now() - new Date(a.created_at).getTime()) / 3_600_000;
+      const ageB = (Date.now() - new Date(b.created_at).getTime()) / 3_600_000;
+      const scoreA = a.comment_count * 3 + 1 / (ageA + 2);
+      const scoreB = b.comment_count * 3 + 1 / (ageB + 2);
+      return scoreB - scoreA;
+    });
+    setPosts(sorted);
+    setLocked(false);
+    setLoadingPosts(false);
+  }, []);
+
+  const fetchOptions = useCallback(async () => {
+    const t = token();
+    if (!t) return;
+    const res = await fetch(`${API}/posts/options`, { headers: { Authorization: `Bearer ${t}` } });
+    const d = await res.json();
+    const opts: PostAsOption[] = d.options || [];
+    setOptions(opts);
+    if (opts.length > 0 && !selectedOption) setSelectedOption(opts[0]);
+  }, [selectedOption]);
+
+  useEffect(() => { fetchPosts(); }, [fetchPosts]);
+  useEffect(() => { if (user) fetchOptions(); }, [user, fetchOptions]);
+
+  const handlePost = async () => {
+    if (!content.trim() || !selectedOption) return;
+    setPosting(true);
+    const res = await fetch(`${API}/posts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token()}` },
+      body: JSON.stringify({
+        content: content.trim(),
+        posted_as_type: selectedOption.type,
+        posted_as_label: selectedOption.label,
+        club_id: selectedOption.club_id,
+      }),
+    });
+    const d = await res.json();
+    if (d.post) {
+      setPosts(p => [d.post, ...p]);
+      setContent("");
+      // Mark your own post as already-seen so it never triggers a notification for you
+      localStorage.setItem("news_last_post_id", String(d.post.id));
+    }
+    setPosting(false);
+  };
+
+  const handleDelete = async (id: number) => {
+    await fetch(`${API}/posts/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token()}` } });
+    setPosts(p => p.filter(x => x.id !== id));
+  };
+
+  // ── Not logged in ──
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-4 rounded-2xl border border-border bg-card text-center px-6">
+        <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center">
+          <LogIn size={22} className="text-blue-500" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-foreground mb-1">Postlarni ko'rish uchun kiring</p>
+          <p className="text-xs text-muted-foreground">Nima bo'layotganini ko'rish uchun TALABA hamjamiyatiga qo'shiling</p>
+        </div>
+        <Link href="/login" className="px-5 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors">
+          Kirish
+        </Link>
+      </div>
+    );
+  }
+
+  // ── Locked (no club membership yet) ──
+  if (locked) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 text-center px-6">
+        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+          <Lock size={22} className="text-amber-500" />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-foreground mb-1">Yangiliklarni o'qish uchun klubga qo'shiling</p>
+          <p className="text-xs text-muted-foreground">Yangiliklar lentasini ko'rish uchun kamida bitta klub yoki jamiyat a'zosi bo'lishingiz kerak</p>
+        </div>
+        <p className="text-[11px] text-muted-foreground">← Klublarni ko'rib chiqing va "Qo'shilish"ni bosing</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Ambassador CTA — visible to non-ambassadors who can't post yet */}
+      {user && options.length === 0 && !["ambassador", "admin"].includes(user.role) && (
+        <div className="p-4 rounded-2xl border border-violet-500/20 bg-violet-500/5 flex flex-col sm:flex-row items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center shrink-0">
+            <Star size={16} className="text-white" />
+          </div>
+          <div className="flex-1 text-center sm:text-left">
+            <p className="text-xs font-semibold text-foreground mb-0.5">Yangiliklar lentasida post qilmoqchimisiz?</p>
+            <p className="text-[11px] text-muted-foreground">Faqat elchilar va klub egalari post qila oladi. TALABA elchisi bo'lishga ariza bering va universitetingiz bilan yangiliklarni ulashing.</p>
+          </div>
+          <button
+            onClick={() => setShowAmbassador(true)}
+            className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-violet-500 to-blue-600 text-white text-xs font-semibold hover:opacity-90 transition-opacity"
+          >
+            <Star size={12} /> Elchi bo'lish
+          </button>
+        </div>
+      )}
+      {showAmbassador && <AmbassadorModal onClose={() => setShowAmbassador(false)} />}
+      {user && selectedOption && options.length > 0 && (
+        <div className="p-4 rounded-2xl border border-border bg-card space-y-3">
+          {/* Post-as picker */}
+          <div className="relative">
+            <button
+              onClick={() => setShowPicker(v => !v)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-muted/50 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+            >
+              <PostAsIcon type={selectedOption.type} />
+              Post qilinmoqda: <span className="font-bold">{selectedOption.label}</span>
+              <ChevronDown size={11} className={`transition-transform ${showPicker ? "rotate-180" : ""}`} />
+            </button>
+            {showPicker && options.length > 1 && (
+              <div className="absolute top-9 left-0 z-20 w-56 rounded-xl border border-border bg-card shadow-lg overflow-hidden">
+                {options.map((o, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { setSelectedOption(o); setShowPicker(false); }}
+                    className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs text-left hover:bg-muted transition-colors ${selectedOption.label === o.label ? "text-blue-600 dark:text-blue-400 bg-blue-500/5" : "text-foreground"}`}
+                  >
+                    <span className={
+                      o.type === "university" ? "text-blue-500" :
+                      o.type === "community"  ? "text-violet-500" :
+                      o.type === "club"       ? "text-emerald-500" : "text-muted-foreground"
+                    }><PostAsIcon type={o.type} /></span>
+                    <span className="font-medium">{o.label}</span>
+                    <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                      o.type === "university" ? "bg-blue-500/10 text-blue-500" :
+                      o.type === "community"  ? "bg-violet-500/10 text-violet-500" :
+                      o.type === "club"       ? "bg-emerald-500/10 text-emerald-500" : ""
+                    }`}>{POSTED_AS_LABELS_UZ[o.type]}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <textarea
+            value={content}
+            onChange={e => setContent(e.target.value)}
+            placeholder="Hamjamiyat bilan yangilik, e'lon yoki tadbirlarni ulashing..."
+            rows={3}
+            className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none leading-relaxed"
+          />
+          <div className="flex items-center justify-between">
+            <span className={`text-[11px] ${content.length > 1800 ? "text-red-400" : "text-muted-foreground"}`}>{content.length}/2000</span>
+            <button
+              onClick={handlePost}
+              disabled={posting || !content.trim()}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors disabled:opacity-40"
+            >
+              {posting ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+              Post qilish
+            </button>
+          </div>
+          {/* Ambassador link — only for non-ambassadors */}
+          {user && !["ambassador", "admin"].includes(user.role) && (
+            <div className="pt-2 border-t border-border flex items-center justify-between">
+              <span className="text-[11px] text-muted-foreground">Universitet elchisi sifatida post qilmoqchimisiz?</span>
+              <button
+                onClick={() => setShowAmbassador(true)}
+                className="flex items-center gap-1 text-[11px] text-violet-600 dark:text-violet-400 hover:text-violet-700 font-semibold transition-colors"
+              >
+                <Star size={10} /> Elchilikka ariza berish
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Feed */}
+      {loadingPosts ? (
+        <div className="flex justify-center py-10"><Loader2 size={20} className="animate-spin text-muted-foreground" /></div>
+      ) : posts.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground text-sm rounded-2xl border border-border bg-card">
+          Hali post yo'q. Birinchi bo'lib biror narsa ulashing!
+        </div>
+      ) : (
+        posts.map(p => (
+          <PostCard key={p.id} post={p} currentUserId={user?.id} onDelete={handleDelete} />
+        ))
+      )}
+    </div>
+  );
+}
