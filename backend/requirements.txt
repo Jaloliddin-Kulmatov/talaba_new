@@ -11,3 +11,4 @@ email-validator==2.2.0
 gunicorn==21.2.0
 psycopg2-binary
 APScheduler==3.10.4
+pywebpush==2.1.2

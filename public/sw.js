@@ -1,5 +1,5 @@
-// TALABA service worker — installable PWA + offline access to pages the student has already opened
-// (the timetable matters most: it must open on a bad connection).
+// TALABA service worker — installable PWA, offline access to pages the student has already opened
+// (the timetable matters most: it must open on a bad connection) and Web Push reminders.
 //
 // Strategy
 //  - Pages (navigations):      network-first, fall back to the cached copy, then /offline.html
@@ -57,6 +57,39 @@ self.addEventListener("fetch", (e) => {
     caches.match(req).then((hit) => {
       const net = fetch(req).then((res) => { put(req, res); return res; }).catch(() => hit);
       return hit || net;
+    }),
+  );
+});
+
+// ── Web Push: class / exam / task reminders sent by the server ──────────────
+// Only same-site paths are honoured as the click target, so a push can never send a student off-site.
+const safePath = (u) => (typeof u === "string" && u.startsWith("/") && !u.startsWith("//") ? u : "/dashboard");
+
+self.addEventListener("push", (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; }
+  catch (_) { try { d = { body: e.data.text() }; } catch (__) { d = {}; } }
+  const title = typeof d.title === "string" && d.title ? d.title.slice(0, 120) : "TALABA";
+  e.waitUntil(
+    self.registration.showNotification(title, {
+      body: typeof d.body === "string" ? d.body.slice(0, 240) : "",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      lang: "uz",
+      tag: typeof d.tag === "string" ? d.tag.slice(0, 160) : undefined,
+      data: { url: safePath(d.url) },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const url = new URL(safePath(e.notification.data && e.notification.data.url), self.location.origin).href;
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
+      const mine = wins.find((c) => new URL(c.url).origin === self.location.origin);
+      if (mine) return mine.focus().then(() => ("navigate" in mine ? mine.navigate(url) : undefined));
+      return self.clients.openWindow(url);
     }),
   );
 });

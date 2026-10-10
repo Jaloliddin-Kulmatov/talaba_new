@@ -10,6 +10,7 @@ from models import (
     User, Club, ClubMembership, ClubMessage,
     Post, PostComment, AmbassadorApplication, Feedback, AISession, Job,
     CourseReview, MarketItem, LostFoundItem, ContentReport, UserSync,
+    PushSubscription, SentReminder,
 )
 
 auth_bp = Blueprint("auth", __name__)
@@ -361,6 +362,10 @@ def delete_me():
         LostFoundItem.query.filter_by(user_id=user_id).delete(synchronize_session=False)
         ContentReport.query.filter_by(user_id=user_id).delete(synchronize_session=False)
         UserSync.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+        sub_ids = [x.id for x in PushSubscription.query.filter_by(user_id=user_id).all()]
+        if sub_ids:
+            SentReminder.query.filter(SentReminder.subscription_id.in_(sub_ids)).delete(synchronize_session=False)
+            PushSubscription.query.filter(PushSubscription.id.in_(sub_ids)).delete(synchronize_session=False)
 
         # 9) Finally, the user.
         db.session.delete(user)

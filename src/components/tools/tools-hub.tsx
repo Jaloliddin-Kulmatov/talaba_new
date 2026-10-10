@@ -14,6 +14,7 @@ import { fmtMinutes } from "@/lib/toolkit/focus";
 import { fmtHours } from "@/lib/toolkit/skills";
 import { FormError, Notice, Panel, Skeleton, useNotice } from "./ui";
 import SyncCard from "./sync-card";
+import ReminderCard from "./reminder-card";
 
 /** One live line per tool, drawn from what the student has saved. */
 function liveLine(id: ToolMeta["id"], s: ToolkitSummary): { text: string; tone?: "warn" | "ok" } {
@@ -141,6 +142,7 @@ export default function ToolsHub() {
       </section>
 
       <SyncCard />
+      <ReminderCard />
       <BackupCard />
     </>
   );

@@ -72,6 +72,7 @@ def create_app():
     from routes.lostfound import lostfound_bp
     from routes.sync import sync_bp
     from routes.moderation import moderation_bp
+    from routes.push import push_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(ai_bp, url_prefix="/api/ai")
@@ -88,6 +89,7 @@ def create_app():
     app.register_blueprint(lostfound_bp, url_prefix="/api/lostfound")
     app.register_blueprint(sync_bp, url_prefix="/api/sync")
     app.register_blueprint(moderation_bp, url_prefix="/api/moderation")
+    app.register_blueprint(push_bp, url_prefix="/api/push")
 
     @app.route("/")
     def index():
@@ -665,6 +667,21 @@ def _start_scheduler(flask_app):
         replace_existing=True,
         misfire_grace_time=3600,
     )
+
+    # Class / exam / task reminders (Web Push) — only when VAPID keys are configured.
+    try:
+        from push_service import send_due_reminders, vapid_configured
+        if vapid_configured():
+            scheduler.add_job(
+                lambda: send_due_reminders(flask_app),
+                trigger="interval", minutes=1, id="push_reminders",
+                replace_existing=True, max_instances=1, coalesce=True,
+            )
+            print("[scheduler] push reminders: every minute")
+        else:
+            print("[scheduler] push reminders off (VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY not set)")
+    except Exception as e:
+        print(f"[scheduler] push reminders unavailable: {e}")
 
     scheduler.start()
     print(

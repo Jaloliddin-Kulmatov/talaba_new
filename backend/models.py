@@ -580,3 +580,31 @@ class UserSync(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True, index=True)
     data = db.Column(db.JSON, default=dict)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+# ── Web push reminders ───────────────────────────────────────────────────────
+
+class PushSubscription(db.Model):
+    """A browser/device that agreed to receive class, exam and task reminders."""
+    __tablename__ = "push_subscriptions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    endpoint = db.Column(db.String(600), nullable=False, unique=True)
+    p256dh = db.Column(db.String(200), nullable=False)
+    auth = db.Column(db.String(100), nullable=False)
+    prefs = db.Column(db.JSON, default=dict)          # {"classMin": 15, "exams": true, "tasks": true}
+    user_agent = db.Column(db.String(200))
+    failures = db.Column(db.Integer, default=0, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class SentReminder(db.Model):
+    """Dedupe log: one row per (subscription, reminder key) so nothing is sent twice."""
+    __tablename__ = "sent_reminders"
+    __table_args__ = (db.UniqueConstraint("subscription_id", "key", name="uq_sent_once"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    subscription_id = db.Column(db.Integer, db.ForeignKey("push_subscriptions.id"), nullable=False, index=True)
+    key = db.Column(db.String(160), nullable=False)
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)

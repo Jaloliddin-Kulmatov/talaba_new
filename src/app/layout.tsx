@@ -9,6 +9,7 @@ import SplashScreen from "@/components/ui/splash-screen";
 import VisitTracker from "@/components/analytics/visit-tracker";
 import SyncManager from "@/components/sync/sync-manager";
 import InstallPrompt from "@/components/pwa/install-prompt";
+import PwaStatus from "@/components/pwa/pwa-status";
 import { AuthProvider } from "@/lib/auth";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -92,6 +93,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <MobileBottomNav />
         <InstallPrompt />
+        <PwaStatus />
         <FeedbackWidget />
         {/* AI floating button — desktop only (hidden on mobile) */}
         <div className="hidden md:block">
