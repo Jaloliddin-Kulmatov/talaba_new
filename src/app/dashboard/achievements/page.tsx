@@ -17,7 +17,7 @@ export default function AchievementsPage() {
         <div className="p-12 rounded-2xl border border-white/8 bg-white/3 text-center">
           <Trophy size={32} className="text-muted-foreground/30 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">Yutuqlar tez orada.</p>
-          <p className="text-xs text-muted-foreground/60 mt-1">Profilingizni to&apos;ldiring va hamjamiyat bilan faol bo&apos;ling — nishonlar shu tariqa qo&apos;lga kiritiladi.</p>
+          <p className="text-xs text-muted-foreground mt-1">Profilingizni to&apos;ldiring va hamjamiyat bilan faol bo&apos;ling — nishonlar shu tariqa qo&apos;lga kiritiladi.</p>
         </div>
       </div>
     </DashboardLayout>

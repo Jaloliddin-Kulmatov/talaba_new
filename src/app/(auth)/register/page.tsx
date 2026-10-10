@@ -166,7 +166,7 @@ export default function RegisterPage() {
 
         <div className="glass-card p-7">
           {error && (
-            <div className="mb-4 px-3 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400 animate-fade-in">
+            <div className="mb-4 px-3 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 animate-fade-in">
               {error}
             </div>
           )}
@@ -209,13 +209,13 @@ export default function RegisterPage() {
                   icon={<Mail size={14} />}
                 />
                 {form.email && !isValidEmail(form.email) && (
-                  <p className="text-[11px] text-red-400 pl-1">Haqiqiy email kiriting (masalan, siz@gmail.com)</p>
+                  <p className="text-[11px] text-red-600 dark:text-red-400 pl-1">Haqiqiy email kiriting (masalan, siz@gmail.com)</p>
                 )}
                 {emailStatus === "checking" && (
                   <p className="text-[11px] text-muted-foreground pl-1">Email tekshirilmoqda…</p>
                 )}
                 {emailStatus === "invalid" && (
-                  <p className="text-[11px] text-red-400 pl-1">
+                  <p className="text-[11px] text-red-600 dark:text-red-400 pl-1">
                     {emailMessage}
                     {emailMessage?.toLowerCase().includes("allaqachon mavjud") && (
                       <> <button type="button" className="underline font-semibold" onClick={() => router.push(`/login?force=1&exists=1&email=${encodeURIComponent(form.email)}`)}>Tizimga kiring</button></>

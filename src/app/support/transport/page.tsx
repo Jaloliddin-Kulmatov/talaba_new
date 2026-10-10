@@ -108,7 +108,7 @@ export default function TransportPage() {
               <CheckCircle2 size={16} className="text-emerald-500 mb-2" />
               <h3 className="text-xs font-semibold text-foreground mb-1">Shaxsiy yordam kerakmi?</h3>
               <p className="text-xs text-muted-foreground mb-3">Kundalik hayot bo'limida yaqin atrofdagi metro va boshqa joylarni ham topishingiz mumkin.</p>
-              <Link href="/daily-life" className="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1 hover:bg-emerald-500/15 transition-colors">
+              <Link href="/daily-life" className="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 hover:bg-emerald-500/15 transition-colors">
                 Kundalik hayotga o'tish <ChevronRight size={11} />
               </Link>
             </div>

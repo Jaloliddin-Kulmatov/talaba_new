@@ -11,7 +11,7 @@ const channels = [
     desc: "Savol bering va bu yerdan o'tgan talabalardan javob oling.",
     action: "Hamjamiyatga o'tish",
     href: "/community",
-    color: "text-blue-500",
+    color: "text-blue-600 dark:text-blue-400",
     bg: "bg-blue-500/10",
   },
   {
@@ -20,7 +20,7 @@ const channels = [
     desc: "Qabul, turargoh, stipendiya va kampus hayoti haqida tezkor javoblar oling.",
     action: "AI'dan so'rash",
     href: "/dashboard/ai",
-    color: "text-violet-500",
+    color: "text-violet-600 dark:text-violet-400",
     bg: "bg-violet-500/10",
   },
   {
@@ -64,7 +64,7 @@ export default function ContactPage() {
                   <div className={`w-10 h-10 rounded-xl ${c.bg} ${c.color} flex items-center justify-center mb-3`}>
                     <Icon size={18} />
                   </div>
-                  <h3 className="text-sm font-bold text-foreground mb-1">{c.title}</h3>
+                  <h2 className="text-sm font-bold text-foreground mb-1">{c.title}</h2>
                   <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{c.desc}</p>
                   <Link href={c.href} className={`text-xs font-semibold ${c.color} hover:underline`}>
                     {c.action} →
@@ -81,7 +81,7 @@ export default function ContactPage() {
             </p>
             <p className="text-xs text-muted-foreground">
               Hamkorlik bo&apos;yicha murojaatlar:{" "}
-              <a href="mailto:jaloliddinqulmatov12@gmail.com" className="text-blue-500 hover:underline">
+              <a href="mailto:jaloliddinqulmatov12@gmail.com" className="text-blue-600 dark:text-blue-400 underline underline-offset-2 hover:text-blue-700 dark:hover:text-blue-300">
                 jaloliddinqulmatov12@gmail.com
               </a>
             </p>

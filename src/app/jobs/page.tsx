@@ -295,7 +295,7 @@ export default function JobsPage() {
                     onClick={() => toggleSchedule(v)}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border capitalize ${
                       scheduleFilter.includes(v)
-                        ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                        ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
                         : "text-muted-foreground border-border hover:border-emerald-500/20 hover:text-foreground"
                     }`}
                   >
@@ -555,7 +555,7 @@ export default function JobsPage() {
                       onClick={() => setAlertLocation(l)}
                       className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all text-left ${
                         alertLocation === l
-                          ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
+                          ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-400"
                           : "bg-muted/50 border-border text-muted-foreground hover:border-emerald-500/30 hover:text-foreground"
                       }`}
                     >

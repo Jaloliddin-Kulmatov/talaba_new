@@ -72,7 +72,7 @@ export default function DailyLifePage() {
         <div className="border-b border-border bg-gradient-to-b from-blue-50 to-transparent dark:from-blue-950/15">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-12 text-center">
             <Badge variant="default" className="mb-3 text-xs px-3 py-1 gap-1.5">
-              <Heart size={11} className="text-rose-400" /> Talaba hayoti
+              <Heart size={11} className="text-rose-600 dark:text-rose-400" /> Talaba hayoti
             </Badge>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground mb-2">
               Talabalik hayoti, <span className="gradient-text">soddalashtirilgan</span>
@@ -224,7 +224,7 @@ function SimpleCard({ emoji, title, body, link }: { emoji: string; title: string
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <p className="text-sm font-semibold text-foreground">{title}</p>
-          {link && <ExternalLink size={10} className="text-muted-foreground/50" />}
+          {link && <ExternalLink size={10} className="text-muted-foreground" />}
         </div>
         <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">{body}</p>
       </div>

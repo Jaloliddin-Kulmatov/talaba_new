@@ -30,13 +30,13 @@ interface JoinRequest {
 
 const CATEGORY_COLORS: Record<string, string> = {
   academic: "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20",
-  sports:   "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+  sports:   "text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
   culture:  "text-violet-600 dark:text-violet-400 bg-violet-500/10 border-violet-500/20",
-  social:   "text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 border-cyan-500/20",
-  language: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
+  social:   "text-cyan-700 dark:text-cyan-400 bg-cyan-500/10 border-cyan-500/20",
+  language: "text-amber-700 dark:text-amber-400 bg-amber-500/10 border-amber-500/20",
   tech:     "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20",
   arts:     "text-pink-600 dark:text-pink-400 bg-pink-500/10 border-pink-500/20",
-  volunteer:"text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/20",
+  volunteer:"text-orange-700 dark:text-orange-400 bg-orange-500/10 border-orange-500/20",
 };
 // Category filters — clubs and communities use different sets
 const CLUB_CATEGORIES      = ["academic", "sports", "culture", "social", "language", "tech", "arts", "volunteer"];
@@ -227,7 +227,7 @@ function CreateClubModal({ onClose, onCreate }: { onClose: () => void; onCreate:
             </div>
           </div>
           <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/15 space-y-3">
-            <p className="text-xs font-semibold text-blue-500 flex items-center gap-1.5"><Lock size={12} /> Maxfiy ma'lumot — faqat qabul qilingan a'zolarga ko'rinadi</p>
+            <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1.5"><Lock size={12} /> Maxfiy ma'lumot — faqat qabul qilingan a'zolarga ko'rinadi</p>
             <div>
               <label className={labelCls}>Telegram guruh havolasi</label>
               <input value={form.telegram_link} onChange={e => setForm(p => ({...p, telegram_link: e.target.value}))} placeholder="masalan, t.me/nuu_poxod" className={inputCls} />

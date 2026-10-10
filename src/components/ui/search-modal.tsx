@@ -267,9 +267,9 @@ export default function SearchModal({
         {/* Input */}
         <div className="flex items-center gap-3 px-4 py-3.5 border-b border-blue-100 dark:border-white/8">
           {showSpinner ? (
-            <Loader2 size={16} className="text-blue-400 shrink-0 animate-spin" />
+            <Loader2 size={16} className="text-blue-600 dark:text-blue-400 shrink-0 animate-spin" />
           ) : (
-            <Search size={16} className="text-blue-400 dark:text-white/40 shrink-0" />
+            <Search size={16} className="text-blue-600 dark:text-blue-400 dark:text-white/40 shrink-0" />
           )}
           <input
             ref={inputRef}
@@ -338,7 +338,7 @@ export default function SearchModal({
                   )}
                   {/* Loading indicator: spinner on last item while API is fetching */}
                   {loading && i === displayResults.length - 1 && apiResults.length === 0 && (
-                    <Loader2 size={10} className="text-blue-400 animate-spin shrink-0 ml-auto" />
+                    <Loader2 size={10} className="text-blue-600 dark:text-blue-400 animate-spin shrink-0 ml-auto" />
                   )}
                 </div>
                 {r.sub && (
@@ -351,7 +351,7 @@ export default function SearchModal({
                 size={12}
                 className={`shrink-0 transition-all ${
                   cursor === i
-                    ? "opacity-100 text-blue-400"
+                    ? "opacity-100 text-blue-600 dark:text-blue-400"
                     : "opacity-0"
                 }`}
               />

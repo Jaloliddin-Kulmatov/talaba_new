@@ -41,7 +41,7 @@ export default function SplashScreen() {
     >
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-blue-500/20 to-emerald-500/20 blur-3xl" />
       <div className="relative flex flex-col items-center gap-5 animate-fade-in">
-        <img src="/logo.svg" alt="" className="h-20 w-20 drop-shadow-xl" />
+        <img src="/logo.svg" alt="" width={80} height={80} className="h-20 w-20 drop-shadow-xl" />
         <div className="text-center">
           <p className="font-display text-3xl font-extrabold tracking-tight text-foreground">
             TALABA<span className="text-blue-500">.</span>

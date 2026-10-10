@@ -82,6 +82,8 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
             <img
               src="/logo.svg"
               alt="TALABA logotipi"
+              width={32}
+              height={32}
               className="w-8 h-8 rounded-full shadow-sm group-hover:shadow-[0_0_16px_rgba(37,99,235,0.5)] transition-shadow select-none"
               draggable={false}
             />
@@ -96,7 +98,7 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-0.5">
+          <nav aria-label="Asosiy menyu" className="hidden md:flex items-center gap-0.5">
             {desktopNavLinks.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
@@ -125,7 +127,7 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
             >
               <Search size={13} />
               <span>Qidirish</span>
-              <kbd className="hidden xl:inline-flex h-4 px-1 rounded bg-border text-[10px] font-mono">⌘K</kbd>
+              <kbd className="hidden xl:inline-flex h-4 px-1 rounded bg-muted text-foreground text-[10px] font-mono">⌘K</kbd>
             </button>
 
             <button
@@ -240,7 +242,7 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
                   )}
                   <button
                     onClick={() => { logout(); setMobileOpen(false); router.push("/"); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors"
                   >
                     <LogOut size={17} />
                     Chiqish

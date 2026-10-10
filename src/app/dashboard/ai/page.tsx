@@ -95,13 +95,13 @@ export default function AIPage() {
           {messages.length === 0 && (
             <div className="text-center py-12">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-violet-500/20 border border-blue-500/20 flex items-center justify-center mx-auto mb-4">
-                <Sparkles size={28} className="text-blue-400" />
+                <Sparkles size={28} className="text-blue-600 dark:text-blue-400" />
               </div>
               <h2 className="text-base font-semibold text-foreground mb-2">Talabalik hayoti haqida nimani xohlasangiz so&apos;rang</h2>
               <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">Qabul, stipendiya, turargoh, ish, harbiy hisob — sizga yordam berishga tayyorman.</p>
               <div className="flex flex-wrap gap-2 justify-center">
                 {QUICK.map(q => (
-                  <button key={q} onClick={() => send(q)} className="text-xs px-3 py-1.5 rounded-full border border-blue-500/25 bg-blue-500/8 text-blue-400 hover:bg-blue-500/15 transition-colors">
+                  <button key={q} onClick={() => send(q)} className="text-xs px-3 py-1.5 rounded-full border border-blue-500/25 bg-blue-500/8 text-blue-600 dark:text-blue-400 hover:bg-blue-500/15 transition-colors">
                     {q}
                   </button>
                 ))}
@@ -131,7 +131,7 @@ export default function AIPage() {
             </div>
           )}
 
-          {error && <p className="text-sm text-red-400 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20">{error}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20">{error}</p>}
           <div ref={bottomRef} />
         </div>
 

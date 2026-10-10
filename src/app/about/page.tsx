@@ -50,14 +50,14 @@ export default function AboutPage() {
                       <h3 className="text-sm font-bold text-foreground">{member.name}</h3>
                       <span className="text-xs text-muted-foreground">{member.country}</span>
                     </div>
-                    <p className="text-xs text-blue-500 font-medium mb-2">{member.role}</p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium mb-2">{member.role}</p>
                     <p className="text-xs text-muted-foreground leading-relaxed">{member.bio}</p>
                   </div>
                 </div>
               ))}
               <div className="p-6 rounded-2xl border border-dashed border-border text-center">
                 <p className="text-sm text-muted-foreground mb-3">Biz o&apos;sib bormoqdamiz. TALABA&apos;ni qurishga yordam berishni xohlaysizmi?</p>
-                <Link href="/contact" className="inline-flex items-center gap-1.5 text-xs text-blue-500 hover:text-blue-600 font-medium">
+                <Link href="/contact" className="inline-flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-600 font-medium">
                   Biz bilan bog&apos;laning <ArrowRight size={12} />
                 </Link>
               </div>

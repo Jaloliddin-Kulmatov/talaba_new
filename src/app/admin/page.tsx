@@ -627,7 +627,7 @@ export default function AdminPage() {
                     type="button"
                     onClick={handleScrapeNow}
                     disabled={scraping}
-                    className="gap-2 bg-emerald-500 hover:bg-emerald-600 text-white"
+                    className="gap-2 bg-emerald-500 hover:bg-emerald-800 text-white"
                   >
                     {scraping ? (
                       <><Loader2 size={14} className="animate-spin" /> Scraping…</>

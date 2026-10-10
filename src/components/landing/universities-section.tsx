@@ -34,14 +34,14 @@ export default function UniversitiesSection() {
                 "Kampusga xos tadbirlar va qo'llanmalar",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                  <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
+                  <CheckCircle2 size={15} className="text-emerald-700 dark:text-emerald-400 shrink-0" />
                   {item}
                 </div>
               ))}
             </div>
             <Link
               href="/universities"
-              className="inline-flex items-center gap-2 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors group"
+              className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors group"
             >
               Barcha universitetlarni ko&apos;rish
               <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
@@ -72,7 +72,7 @@ export default function UniversitiesSection() {
                     {uni.name}
                   </p>
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground/70">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Users size={10} />
                       <span>{uni.students.toLocaleString()} talaba</span>
                     </div>
@@ -85,7 +85,7 @@ export default function UniversitiesSection() {
             {/* More universities teaser */}
             {moreCount > 0 && (
               <div className="p-4 rounded-2xl border border-dashed border-border bg-card/50 flex flex-col items-center justify-center text-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 font-bold text-sm">
+                <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-sm">
                   +{moreCount}
                 </div>
                 <p className="text-xs text-muted-foreground">Yana ko&apos;plab universitetlar</p>

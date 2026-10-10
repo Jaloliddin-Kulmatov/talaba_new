@@ -52,7 +52,7 @@ const communityLinks = [
     icon: TelegramIcon,
     href: "https://t.me/talaba_uz",
     label: "Telegram kanali",
-    color: "hover:text-sky-400 hover:bg-sky-400/10 hover:border-sky-400/30",
+    color: "hover:text-sky-800 dark:hover:text-sky-400 hover:bg-sky-400/10 hover:border-sky-400/30",
   },
 ];
 
@@ -77,6 +77,8 @@ export default function Footer() {
               <img
                 src="/logo.svg"
                 alt="TALABA logotipi"
+                width={32}
+                height={32}
                 className="h-8 w-8 rounded-full select-none"
                 draggable={false}
               />
@@ -87,12 +89,12 @@ export default function Footer() {
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-4">
               O'zbekiston talabalari uchun yagona platforma. Bog'laning, rivojlaning va muvaffaqiyatga erishing.
             </p>
-            <p className="text-xs text-muted-foreground/60">
+            <p className="text-xs text-muted-foreground">
               Hozirda O'zbekistonning 14 ta viloyatidan 45+ universitet talabalarini qo'llab-quvvatlaymiz.
             </p>
             {/* TALABA community channel */}
             <div className="mt-5">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/50 mb-2">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
                 Hamjamiyatimizga qo'shiling
               </p>
               <div className="flex items-center gap-2">
@@ -158,7 +160,7 @@ export default function Footer() {
 
         {/* Bottom */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-8 border-t border-border">
-          <p className="text-xs text-muted-foreground/60">
+          <p className="text-xs text-muted-foreground">
             © 2026 TALABA. Barcha huquqlar himoyalangan. O'zbek talabalari uchun, mehr bilan.
           </p>
         </div>

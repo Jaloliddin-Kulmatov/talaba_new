@@ -155,7 +155,7 @@ export default function InstallPrompt() {
               // iOS: show the Share → Add to Home Screen instruction.
               <div className="mt-3 flex items-center gap-2 rounded-2xl bg-blue-500/8 border border-blue-500/15 px-3 py-2.5">
                 <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-500/15 shrink-0">
-                  <Share size={14} className="text-blue-400" />
+                  <Share size={14} className="text-blue-600 dark:text-blue-400" />
                 </span>
                 <p className="text-[11px] text-foreground/80 leading-snug">
                   <span className="font-semibold text-foreground">Share</span> (Ulashish) tugmasini bosing, so&apos;ng{" "}

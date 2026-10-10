@@ -25,7 +25,7 @@ export function Stars({ value, size = 16, className }: { value: number; size?: n
   return (
     <span className={cn("inline-flex items-center gap-0.5", className)} role="img" aria-label={`${value.toFixed(1)} / 5`}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <Star key={n} size={size} className={n <= full ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"} />
+        <Star key={n} size={size} className={n <= full ? "fill-amber-400 text-amber-700 dark:text-amber-400" : "text-muted-foreground/30"} />
       ))}
     </span>
   );
@@ -47,7 +47,7 @@ export function StarInput({ value, onChange, label }: { value: number; onChange:
           onClick={() => onChange(n === value ? 0 : n)}
           className="rounded-md p-0.5 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
-          <Star size={30} className={(hover || value) >= n ? "fill-amber-400 text-amber-400" : "text-muted-foreground/35"} />
+          <Star size={30} className={(hover || value) >= n ? "fill-amber-400 text-amber-700 dark:text-amber-400" : "text-muted-foreground/35"} />
         </button>
       ))}
     </div>

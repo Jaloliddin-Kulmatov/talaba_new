@@ -162,7 +162,7 @@ function HeroPreview() {
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-right text-[10px] text-muted-foreground/70">Namuna ma&apos;lumotlar</p>
+        <p className="mt-3 text-right text-[10px] text-muted-foreground">Namuna ma&apos;lumotlar</p>
       </div>
 
       {/* floating: GPA */}
@@ -187,7 +187,7 @@ function HeroPreview() {
 
       {/* floating: focus */}
       <div className="absolute -bottom-3 -right-2 hidden animate-float items-center gap-2 rounded-2xl border border-border bg-card px-3.5 py-2.5 shadow-card [animation-delay:3s] sm:flex sm:-right-6">
-        <Timer size={16} className="text-emerald-600 dark:text-emerald-400" />
+        <Timer size={16} className="text-emerald-700 dark:text-emerald-400" />
         <span className="font-display text-base font-bold tabular-nums text-foreground">25:00</span>
       </div>
     </div>

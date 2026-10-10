@@ -98,9 +98,9 @@ export default function AttendanceApp() {
             role="status"
           >
             {atRisk > 0 ? (
-              <AlertTriangle size={20} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <AlertTriangle size={20} className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-400" />
             ) : (
-              <ShieldCheck size={20} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              <ShieldCheck size={20} className="mt-0.5 shrink-0 text-emerald-700 dark:text-emerald-400" />
             )}
             <div>
               <p className="text-sm font-semibold text-foreground">

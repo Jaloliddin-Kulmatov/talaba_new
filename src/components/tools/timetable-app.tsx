@@ -321,7 +321,7 @@ function NowCard({
           {total > 0 && (
             <div className="flex items-center gap-3 text-[11px]">
               {!hasAnchor && (
-                <button onClick={onConfirm} className="font-medium text-emerald-600 hover:underline dark:text-emerald-400">
+                <button onClick={onConfirm} className="font-medium text-emerald-700 hover:underline dark:text-emerald-400">
                   Ha, to&apos;g&apos;ri
                 </button>
               )}

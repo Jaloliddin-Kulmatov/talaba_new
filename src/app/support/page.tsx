@@ -230,7 +230,7 @@ export default function SupportPage() {
                   </h3>
                   <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{cat.description}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground/70">{cat.guides} ta qo'llanma</span>
+                    <span className="text-xs text-muted-foreground">{cat.guides} ta qo'llanma</span>
                     <ChevronRight size={13} className="text-muted-foreground group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" />
                   </div>
                 </Link>
@@ -314,7 +314,7 @@ export default function SupportPage() {
                   className="flex flex-col items-center p-4 rounded-xl bg-card border border-border hover:border-red-500/30 hover:bg-red-500/5 transition-all text-center"
                 >
                   <span className="text-2xl mb-1">{icon}</span>
-                  <span className="text-lg font-bold text-red-500">{number}</span>
+                  <span className="text-lg font-bold text-red-600 dark:text-red-400">{number}</span>
                   <span className="text-xs text-muted-foreground">{label}</span>
                 </a>
               ))}

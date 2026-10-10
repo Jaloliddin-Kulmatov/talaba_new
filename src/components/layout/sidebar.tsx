@@ -101,6 +101,7 @@ export default function Sidebar() {
 
   return (
     <aside
+      aria-label="Yon menyu"
       className={cn(
         "fixed left-0 top-16 bottom-0 z-40 hidden md:flex flex-col bg-blue-50/80 dark:bg-[#0a0a12] border-r border-blue-100 dark:border-white/8 transition-all duration-300 scrollbar-thin overflow-y-auto",
         collapsed ? "w-16" : "w-60"
@@ -109,6 +110,8 @@ export default function Sidebar() {
       {/* Toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}
+        aria-label={collapsed ? "Menyuni ochish" : "Menyuni yig'ish"}
+        aria-expanded={!collapsed}
         className="absolute -right-3 top-8 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-blue-200 dark:border-white/15 bg-blue-50 dark:bg-[#0a0a12] text-muted-foreground hover:text-foreground transition-colors shadow-lg"
       >
         {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
@@ -118,7 +121,7 @@ export default function Sidebar() {
         {sidebarSections.map((section) => (
           <div key={section.label}>
             {!collapsed && (
-              <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+              <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                 {section.label}
               </p>
             )}
@@ -133,8 +136,8 @@ export default function Sidebar() {
                     className={cn(
                       "flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 group relative",
                       isActive(href)
-                        ? "bg-blue-100 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-0.5 before:rounded-r before:bg-blue-500 dark:before:bg-blue-400"
-                        : "text-slate-500 dark:text-muted-foreground hover:text-slate-800 dark:hover:text-foreground hover:bg-blue-100 dark:hover:bg-white/5"
+                        ? "bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-0.5 before:rounded-r before:bg-blue-500 dark:before:bg-blue-400"
+                        : "text-slate-600 dark:text-muted-foreground hover:text-slate-800 dark:hover:text-foreground hover:bg-blue-100 dark:hover:bg-white/5"
                     )}
                   >
                     <span className="relative shrink-0">
@@ -142,7 +145,7 @@ export default function Sidebar() {
                         size={17}
                         className={cn(
                           "transition-transform group-hover:scale-110",
-                          isActive(href) ? "text-blue-600 dark:text-blue-400" : ""
+                          isActive(href) ? "text-blue-700 dark:text-blue-400" : ""
                         )}
                       />
                       {isNotif && notifCount > 0 && (
@@ -180,7 +183,7 @@ export default function Sidebar() {
         {user?.role === "admin" && (
           <div>
             {!collapsed && (
-              <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+              <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                 Admin
               </p>
             )}
@@ -190,8 +193,8 @@ export default function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 group relative",
                 pathname === "/admin"
-                  ? "bg-amber-500/15 text-amber-400"
-                  : "text-muted-foreground hover:text-amber-400 hover:bg-amber-500/5"
+                  ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                  : "text-muted-foreground hover:text-amber-800 dark:hover:text-amber-400 hover:bg-amber-500/5"
               )}
             >
               <ShieldCheck size={17} className="shrink-0" />
@@ -202,7 +205,7 @@ export default function Sidebar() {
               title={collapsed ? "Moderatsiya" : undefined}
               className={cn(
                 "mt-0.5 flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                isActive("/admin/moderation") ? "bg-amber-500/15 text-amber-400" : "text-muted-foreground hover:text-amber-400 hover:bg-amber-500/5"
+                isActive("/admin/moderation") ? "bg-amber-500/15 text-amber-700 dark:text-amber-400" : "text-muted-foreground hover:text-amber-800 dark:hover:text-amber-400 hover:bg-amber-500/5"
               )}
             >
               <ShieldCheck size={17} className="shrink-0" />
@@ -232,7 +235,7 @@ export default function Sidebar() {
             </Link>
             <button
               onClick={handleLogout}
-              className="mt-1 w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-red-400 hover:bg-red-500/8 transition-all"
+              className="mt-1 w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/8 transition-all"
             >
               <LogOut size={15} className="shrink-0" />
               <span>Chiqish</span>
@@ -242,7 +245,7 @@ export default function Sidebar() {
           <button
             onClick={handleLogout}
             title="Chiqish"
-            className="w-full flex items-center justify-center p-2 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/8 transition-all"
+            className="w-full flex items-center justify-center p-2 rounded-lg text-muted-foreground hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/8 transition-all"
           >
             <LogOut size={16} />
           </button>

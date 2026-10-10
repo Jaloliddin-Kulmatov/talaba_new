@@ -114,7 +114,7 @@ export default function FeedbackPage() {
                 </button>
                 <Link
                   href="/dashboard"
-                  className="px-5 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-colors"
+                  className="px-5 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-800 transition-colors"
                 >
                   Boshqaruv paneliga qaytish
                 </Link>
@@ -143,7 +143,7 @@ export default function FeedbackPage() {
                       >
                         <Star
                           size={32}
-                          className={active ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40"}
+                          className={active ? "fill-amber-400 text-amber-700 dark:text-amber-400" : "text-muted-foreground/40"}
                         />
                       </button>
                     );
@@ -159,7 +159,7 @@ export default function FeedbackPage() {
               {/* Comment */}
               <div>
                 <label className="text-sm font-semibold text-foreground mb-2 block">
-                  Fikringiz <span className="text-red-400">*</span>
+                  Fikringiz <span className="text-red-600 dark:text-red-400">*</span>
                 </label>
                 <textarea
                   value={message}
@@ -215,7 +215,7 @@ export default function FeedbackPage() {
 
               {/* Error */}
               {error && (
-                <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+                <div className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-600 dark:text-red-400">
                   {error}
                 </div>
               )}

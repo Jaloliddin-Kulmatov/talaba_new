@@ -321,9 +321,9 @@ export default function ChatPage() {
                         </span>
                       )}
                     </div>
-                    <h3 className="text-sm font-bold text-foreground leading-snug mb-1">
+                    <h2 className="text-sm font-bold text-foreground leading-snug mb-1">
                       {p.title}
-                    </h3>
+                    </h2>
                     <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-2">
                       {p.content}
                     </p>
@@ -550,7 +550,7 @@ function ComposerModal({
           </div>
 
           {error && (
-            <div className="flex items-start gap-2 p-3 rounded-xl border border-red-500/20 bg-red-500/5 text-xs text-red-400">
+            <div className="flex items-start gap-2 p-3 rounded-xl border border-red-500/20 bg-red-500/5 text-xs text-red-600 dark:text-red-400">
               <AlertCircle size={13} className="shrink-0 mt-0.5" />
               <span className="leading-relaxed">{error}</span>
             </div>

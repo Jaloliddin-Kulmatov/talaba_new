@@ -26,10 +26,10 @@ export default function AnalyticsPage() {
 
         <div className="grid grid-cols-2 gap-4 mb-6">
           {[
-            { icon: User, label: "A'zo bo'lgan sana", value: joined, color: "text-blue-400", bg: "bg-blue-500/10" },
-            { icon: Globe, label: "Universitet", value: user?.university || "Kiritilmagan", color: "text-violet-400", bg: "bg-violet-500/10" },
-            { icon: Calendar, label: "Ta'lim shakli", value: user?.funding_type || "Kiritilmagan", color: "text-cyan-400", bg: "bg-cyan-500/10" },
-            { icon: TrendingUp, label: "Holat", value: user?.role === "admin" ? "Admin" : "Talaba", color: "text-emerald-400", bg: "bg-emerald-500/10" },
+            { icon: User, label: "A'zo bo'lgan sana", value: joined, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10" },
+            { icon: Globe, label: "Universitet", value: user?.university || "Kiritilmagan", color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-500/10" },
+            { icon: Calendar, label: "Ta'lim shakli", value: user?.funding_type || "Kiritilmagan", color: "text-cyan-700 dark:text-cyan-400", bg: "bg-cyan-500/10" },
+            { icon: TrendingUp, label: "Holat", value: user?.role === "admin" ? "Admin" : "Talaba", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-500/10" },
           ].map(({ icon: Icon, label, value, color, bg }) => (
             <div key={label} className="p-5 rounded-2xl border border-white/8 bg-white/3">
               <div className={`h-8 w-8 rounded-xl flex items-center justify-center ${bg} mb-3`}>

@@ -15,9 +15,9 @@ import { EmptyState, Field, NumInput, Panel, Segmented, Skeleton, ToolHeader, fi
 
 const TONE: Record<ReturnType<typeof gpaTone>, { text: string; ring: string; label: string }> = {
   none:  { text: "text-muted-foreground",                  ring: "stroke-muted-foreground/30", label: "Ma'lumot kiriting" },
-  great: { text: "text-emerald-600 dark:text-emerald-400", ring: "stroke-emerald-500",         label: "A'lo natija" },
+  great: { text: "text-emerald-700 dark:text-emerald-400", ring: "stroke-emerald-500",         label: "A'lo natija" },
   good:  { text: "text-blue-600 dark:text-blue-400",       ring: "stroke-blue-500",            label: "Yaxshi natija" },
-  ok:    { text: "text-amber-600 dark:text-amber-400",     ring: "stroke-amber-500",           label: "Qoniqarli" },
+  ok:    { text: "text-amber-700 dark:text-amber-400",     ring: "stroke-amber-500",           label: "Qoniqarli" },
   low:   { text: "text-red-600 dark:text-red-400",         ring: "stroke-red-500",             label: "Yaxshilash kerak" },
 };
 

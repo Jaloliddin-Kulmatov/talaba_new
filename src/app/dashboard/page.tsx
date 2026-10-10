@@ -41,10 +41,10 @@ const CLUB_CATEGORIES = ["academic", "sports", "culture", "social", "language", 
 
 const quickLinks = [
   { href: "/tools",        icon: LayoutGrid,    label: "Asboblar",        tint: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
-  { href: "/jobs",         icon: Briefcase,     label: "Ish va amaliyot", tint: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
-  { href: "/chat",         icon: MessageSquare, label: "Chat",            tint: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400" },
+  { href: "/jobs",         icon: Briefcase,     label: "Ish va amaliyot", tint: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" },
+  { href: "/chat",         icon: MessageSquare, label: "Chat",            tint: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400" },
   { href: "/community",    icon: Users,         label: "Klublar",         tint: "bg-violet-500/10 text-violet-600 dark:text-violet-400" },
-  { href: "/universities", icon: GraduationCap, label: "Universitetlar",  tint: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+  { href: "/universities", icon: GraduationCap, label: "Universitetlar",  tint: "bg-amber-500/10 text-amber-700 dark:text-amber-400" },
   { href: "/support",      icon: Globe,         label: "Talaba hayoti",   tint: "bg-rose-500/10 text-rose-600 dark:text-rose-400" },
 ];
 
@@ -141,7 +141,7 @@ export default function DashboardPage() {
           <p className="text-sm text-muted-foreground">TALABA-ga xush kelibsiz — universitetdagi hayotingiz uchun yo&apos;lboshchi.</p>
         </div>
         <Button variant="glass" size="sm" asChild className="gap-1.5 hidden sm:flex">
-          <Link href="/dashboard/ai"><Sparkles size={14} className="text-violet-400" /> AI-dan so&apos;rash</Link>
+          <Link href="/dashboard/ai"><Sparkles size={14} className="text-violet-600 dark:text-violet-400" /> AI-dan so&apos;rash</Link>
         </Button>
       </div>
 
@@ -161,7 +161,7 @@ export default function DashboardPage() {
               <div className="p-6 rounded-2xl border border-dashed border-border text-center">
                 <Users size={24} className="text-muted-foreground/30 mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">Siz hali hech qanday klub yoki hamjamiyatga qo&apos;shilmagansiz.</p>
-                <Link href="/community" className="mt-2 inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                <Link href="/community" className="mt-2 inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
                   Hamjamiyatlarni ko&apos;rish <ArrowRight size={10} />
                 </Link>
               </div>
@@ -178,7 +178,7 @@ export default function DashboardPage() {
                         ({myUniversityClubs.length + myJoinedClubs.length})
                       </span>
                     </h2>
-                    <Link href="/community" className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                    <Link href="/community" className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
                       <Plus size={11} /> Ko&apos;rish
                     </Link>
                   </div>
@@ -203,7 +203,7 @@ export default function DashboardPage() {
                         ({myCommunities.length})
                       </span>
                     </h2>
-                    <Link href="/community" className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                    <Link href="/community" className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
                       <Plus size={11} /> Ko&apos;rish
                     </Link>
                   </div>
@@ -283,7 +283,7 @@ export default function DashboardPage() {
           <div className="w-full max-w-lg bg-card text-card-foreground border border-border rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
-                <Pencil size={14} className="text-blue-400" />
+                <Pencil size={14} className="text-blue-600 dark:text-blue-400" />
                 {editingClub.club_type === "community" ? "Hamjamiyatni tahrirlash" : "Klubni tahrirlash"}
               </h2>
               <button onClick={() => setEditingClub(null)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent"><X size={15} /></button>
@@ -335,7 +335,7 @@ export default function DashboardPage() {
               </div>
 
               {editMsg && (
-                <p className={`text-xs text-center ${editMsg === "Saqlandi!" ? "text-emerald-400" : "text-red-400"}`}>{editMsg}</p>
+                <p className={`text-xs text-center ${editMsg === "Saqlandi!" ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>{editMsg}</p>
               )}
 
               <div className="flex gap-2 pt-1">
@@ -360,7 +360,7 @@ function ClubCard({ club, isOwner, onEdit, onLeave }: {
   onLeave?: () => void;
 }) {
   const isCommunity = club.club_type === "community";
-  const accentColor = isCommunity ? "text-violet-400" : "text-blue-400";
+  const accentColor = isCommunity ? "text-violet-600 dark:text-violet-400" : "text-blue-600 dark:text-blue-400";
   const borderColor = isCommunity ? "border-violet-500/20" : "border-blue-500/20";
   const bgColor     = isCommunity ? "bg-violet-500/5"     : "bg-blue-500/5";
 
@@ -373,11 +373,11 @@ function ClubCard({ club, isOwner, onEdit, onLeave }: {
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${isCommunity ? "bg-violet-500/15 text-violet-400" : "bg-blue-500/15 text-blue-400"}`}>
+            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${isCommunity ? "bg-violet-500/15 text-violet-600 dark:text-violet-400" : "bg-blue-500/15 text-blue-600 dark:text-blue-400"}`}>
               {isCommunity ? "Hamjamiyat" : "Klub"}
             </span>
             {isOwner && (
-              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400">Egasi</span>
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400">Egasi</span>
             )}
           </div>
           <h3 className="text-sm font-bold text-foreground leading-tight truncate">{club.name}</h3>
@@ -391,14 +391,14 @@ function ClubCard({ club, isOwner, onEdit, onLeave }: {
             </button>
           )}
           {!isOwner && onLeave && (
-            <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onLeave(); }} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/8 transition-all" title="Chiqish">
+            <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onLeave(); }} className="p-1.5 rounded-lg text-muted-foreground hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/8 transition-all" title="Chiqish">
               <LogOut size={12} />
             </button>
           )}
           {club.website && (
             <a href={club.website} target="_blank" rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-blue-400 hover:bg-accent transition-all" title="Veb-sayt">
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-blue-700 dark:hover:text-blue-400 hover:bg-accent transition-all" title="Veb-sayt">
               <ExternalLink size={12} />
             </a>
           )}
@@ -411,7 +411,7 @@ function ClubCard({ club, isOwner, onEdit, onLeave }: {
       )}
 
       {/* Meta */}
-      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground/70 mt-auto">
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground mt-auto">
         {club.meeting_time && <span className="flex items-center gap-1"><Calendar size={9} />{club.meeting_time}</span>}
         {club.member_count > 0 && <span className="flex items-center gap-1"><Users size={9} />{club.member_count} a&apos;zo</span>}
         {club.location && <span className="flex items-center gap-1"><Globe size={9} />{club.location}</span>}

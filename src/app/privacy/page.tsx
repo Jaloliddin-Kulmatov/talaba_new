@@ -58,7 +58,7 @@ export default function PrivacyPage() {
           <div className="mt-10 p-4 rounded-xl border border-border bg-card">
             <p className="text-xs text-muted-foreground">
               Ushbu siyosat bo&apos;yicha savollaringiz bormi?{" "}
-              <a href="mailto:jaloliddinqulmatov12@gmail.com" className="text-blue-500 hover:underline">
+              <a href="mailto:jaloliddinqulmatov12@gmail.com" className="text-blue-600 dark:text-blue-400 underline underline-offset-2 hover:text-blue-700 dark:hover:text-blue-300">
                 jaloliddinqulmatov12@gmail.com
               </a>
             </p>

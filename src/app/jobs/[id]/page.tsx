@@ -358,7 +358,7 @@ export default function JobDetailPage() {
                 </h3>
                 <div className={`flex items-start gap-2 text-xs ${
                   job.student_friendly === "ha"  ? "text-emerald-500" :
-                  job.student_friendly === "yoq" ? "text-red-500" :
+                  job.student_friendly === "yoq" ? "text-red-600 dark:text-red-400" :
                   "text-amber-500"
                 }`}>
                   {job.student_friendly === "ha" ? <CheckCircle2 size={12} className="shrink-0 mt-0.5" /> :

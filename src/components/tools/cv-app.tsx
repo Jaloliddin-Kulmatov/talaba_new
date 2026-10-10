@@ -299,9 +299,9 @@ export function CvSheet({ cv, tracked }: { cv: CvData; tracked: Skill[] }) {
     <div className="p-[46px] text-[12.5px] leading-[1.5]" style={{ fontFamily: "Inter, Arial, sans-serif" }}>
       <header className={cn(modern && "-mx-[46px] -mt-[46px] mb-1 px-[46px] pb-5 pt-[46px] text-white")} style={modern ? { background: accent } : undefined}>
         <h1 className="text-[30px] font-extrabold leading-tight tracking-tight">{cv.fullName || "Ism Familiya"}</h1>
-        {cv.title && <p className={cn("text-[15px] font-medium", modern ? "text-white/90" : "text-slate-600")}>{cv.title}</p>}
+        {cv.title && <p className={cn("text-[15px] font-medium", modern ? "text-white" : "text-slate-600")}>{cv.title}</p>}
         {contacts.length > 0 && (
-          <ul className={cn("mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12px]", modern ? "text-white/90" : "text-slate-600")}>
+          <ul className={cn("mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12px]", modern ? "text-white" : "text-slate-600")}>
             {contacts.map(({ icon: I, text }) => <li key={text} className="inline-flex items-center gap-1"><I size={12} /> {text}</li>)}
           </ul>
         )}
@@ -313,7 +313,7 @@ export function CvSheet({ cv, tracked }: { cv: CvData; tracked: Skill[] }) {
         <Section title={h.experience}>
           {cv.experience.filter((e) => e.role || e.org).map((e) => (
             <div key={e.id} className="mb-3 break-inside-avoid">
-              <div className="flex justify-between gap-4"><b>{e.role}{e.role && e.org ? " · " : ""}{e.org}</b><span className="shrink-0 text-slate-500">{period(e.from, e.to, h.present)}</span></div>
+              <div className="flex justify-between gap-4"><b>{e.role}{e.role && e.org ? " · " : ""}{e.org}</b><span className="shrink-0 text-slate-600">{period(e.from, e.to, h.present)}</span></div>
               {e.desc.trim() && <ul className="mt-0.5 list-disc pl-5">{e.desc.split("\n").filter((l) => l.trim()).map((l, i) => <li key={i}>{l.replace(/^[-•*]\s*/, "")}</li>)}</ul>}
             </div>
           ))}
@@ -324,7 +324,7 @@ export function CvSheet({ cv, tracked }: { cv: CvData; tracked: Skill[] }) {
         <Section title={h.projects}>
           {cv.projects.filter((p) => p.name).map((p) => (
             <div key={p.id} className="mb-2 break-inside-avoid">
-              <b>{p.name}</b>{p.link && <span className="ml-2 text-slate-500">{p.link}</span>}
+              <b>{p.name}</b>{p.link && <span className="ml-2 text-slate-600">{p.link}</span>}
               {p.desc.trim() && <p>{p.desc}</p>}
             </div>
           ))}
@@ -335,7 +335,7 @@ export function CvSheet({ cv, tracked }: { cv: CvData; tracked: Skill[] }) {
         <Section title={h.education}>
           {cv.education.filter((e) => e.school).map((e) => (
             <div key={e.id} className="mb-2 break-inside-avoid">
-              <div className="flex justify-between gap-4"><b>{e.school}</b><span className="shrink-0 text-slate-500">{period(e.from, e.to, h.present)}</span></div>
+              <div className="flex justify-between gap-4"><b>{e.school}</b><span className="shrink-0 text-slate-600">{period(e.from, e.to, h.present)}</span></div>
               {e.degree && <p className="text-slate-600">{e.degree}</p>}
             </div>
           ))}

@@ -186,7 +186,7 @@ export default function FAQPage() {
               >
                 {cat}
                 {cat !== "Barchasi" && (
-                  <span className="ml-1.5 text-muted-foreground/50">
+                  <span className="ml-1.5 text-muted-foreground">
                     {FAQS.filter(f => f.category === cat).length}
                   </span>
                 )}
@@ -211,7 +211,7 @@ export default function FAQPage() {
             <div className="text-center py-16">
               <MessageSquare size={32} className="text-muted-foreground/30 mx-auto mb-3" />
               <p className="text-sm text-muted-foreground font-medium">Qidiruvingizga mos savol topilmadi.</p>
-              <p className="text-xs text-muted-foreground/60 mt-1 mb-4">Boshqa kalit so'z bilan qidiring yoki AI yordamchidan so'rang.</p>
+              <p className="text-xs text-muted-foreground mt-1 mb-4">Boshqa kalit so'z bilan qidiring yoki AI yordamchidan so'rang.</p>
               <Link
                 href="/dashboard/ai"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"

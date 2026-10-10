@@ -292,7 +292,7 @@ export default function ChatDetailPage() {
               {replyingTo && (
                 <div className="flex items-center gap-1.5 mb-2 px-2.5 py-1.5 rounded-xl bg-blue-500/8 border border-blue-500/20 w-fit">
                   <CornerDownRight size={11} className="text-blue-500" />
-                  <span className="text-[11px] text-blue-500 font-medium">@{replyingTo.name}</span>
+                  <span className="text-[11px] text-blue-600 dark:text-blue-400 font-medium">@{replyingTo.name}</span>
                 </div>
               )}
 
@@ -317,7 +317,7 @@ export default function ChatDetailPage() {
                 <p className="text-[10px] text-muted-foreground">{reply.length}/3000</p>
               </div>
               {replyError && (
-                <div className="flex items-start gap-2 p-3 mt-3 rounded-xl border border-red-500/20 bg-red-500/5 text-xs text-red-400">
+                <div className="flex items-start gap-2 p-3 mt-3 rounded-xl border border-red-500/20 bg-red-500/5 text-xs text-red-600 dark:text-red-400">
                   <AlertCircle size={13} className="shrink-0 mt-0.5" />
                   <span className="leading-relaxed">{replyError}</span>
                 </div>

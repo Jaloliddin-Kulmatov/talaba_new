@@ -48,7 +48,7 @@ export default function SyncCard() {
     <Panel className="mt-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"><Cloud size={18} /></span>
+          <span className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"><Cloud size={18} /></span>
           <div className="max-w-xl">
             <h2 className="text-base font-semibold text-foreground">Sinxronlash yoqilgan</h2>
             <p className="mt-0.5 text-sm text-muted-foreground">

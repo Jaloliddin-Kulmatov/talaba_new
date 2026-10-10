@@ -53,7 +53,7 @@ export default function MemberCount() {
         </span>
         <Users size={14} className="text-emerald-500" />
         <span className="text-sm text-foreground">
-          <span className="font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+          <span className="font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
             {display.toLocaleString()}
           </span>{" "}
           NUU talabasi allaqachon qo&apos;shildi

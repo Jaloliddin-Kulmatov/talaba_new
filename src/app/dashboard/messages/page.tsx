@@ -17,7 +17,7 @@ export default function MessagesPage() {
         <div className="p-12 rounded-2xl border border-white/8 bg-white/3 text-center">
           <MessageSquare size={32} className="text-muted-foreground/30 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">Xabarlar tez orada.</p>
-          <p className="text-xs text-muted-foreground/60 mt-1">Boshqa talabalar bilan bevosita bog&apos;laning — tez kunda ishga tushadi.</p>
+          <p className="text-xs text-muted-foreground mt-1">Boshqa talabalar bilan bevosita bog&apos;laning — tez kunda ishga tushadi.</p>
         </div>
       </div>
     </DashboardLayout>

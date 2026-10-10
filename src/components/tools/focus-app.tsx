@@ -17,7 +17,7 @@ import {
 import { Notice, Panel, Segmented, Skeleton, ToolHeader, fieldCls, useNotice } from "./ui";
 
 const MODE_COLOR: Record<FocusMode, { stroke: string; text: string; bg: string }> = {
-  focus: { stroke: "stroke-emerald-500", text: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-600 hover:bg-emerald-700" },
+  focus: { stroke: "stroke-emerald-500", text: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-600 hover:bg-emerald-700" },
   short: { stroke: "stroke-blue-500", text: "text-blue-600 dark:text-blue-400", bg: "bg-blue-600 hover:bg-blue-700" },
   long: { stroke: "stroke-violet-500", text: "text-violet-600 dark:text-violet-400", bg: "bg-violet-600 hover:bg-violet-700" },
 };
@@ -198,7 +198,7 @@ export default function FocusApp() {
                 <span className={cn("mt-1 text-sm font-semibold", color.text)}>
                   {running ? MODE_LABEL[timer.mode] : paused ? "To'xtatilgan" : "Tayyor"}
                 </span>
-                <span className="mt-2 flex gap-1.5" aria-label={`Joriy to'plam: ${timer.cycle % 4} / 4`}>
+                <span className="mt-2 flex gap-1.5" role="img" aria-label={`Joriy to'plam: ${timer.cycle % 4} / 4`}>
                   {[0, 1, 2, 3].map((i) => (
                     <span key={i} className={cn("h-1.5 w-1.5 rounded-full", i < timer.cycle % 4 ? "bg-emerald-500" : "bg-muted-foreground/25")} />
                   ))}

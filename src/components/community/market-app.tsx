@@ -124,7 +124,7 @@ export default function MarketApp() {
                     {it.status === "sold" && <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">SOTILDI</span>}
                   </div>
                   <h2 className="mt-2 line-clamp-2 text-sm font-semibold text-foreground">{it.title}</h2>
-                  <p className={cn("mt-1 font-display text-lg font-extrabold", it.price === 0 ? "text-emerald-600" : "text-foreground")}>{formatPrice(it.price)}</p>
+                  <p className={cn("mt-1 font-display text-lg font-extrabold", it.price === 0 ? "text-emerald-700 dark:text-emerald-400" : "text-foreground")}>{formatPrice(it.price)}</p>
                   <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-3 text-xs text-muted-foreground">
                     {it.condition && <span className="inline-flex items-center gap-1"><Tag size={11} />{CONDITIONS.find((c) => c.id === it.condition)?.label}</span>}
                     {it.university && <span className="inline-flex items-center gap-1"><MapPin size={11} />{it.university}</span>}

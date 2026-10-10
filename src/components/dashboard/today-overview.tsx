@@ -60,7 +60,7 @@ export default function TodayOverview() {
           {s.attendanceSubjects > 0 && (
             <Link href="/tools/attendance" className={cn(cardCls, "flex-row items-center justify-between py-3")}>
               <span className="text-sm text-muted-foreground">Davomat</span>
-              <span className={cn("text-sm font-semibold", s.attendanceAtRisk > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400")}>
+              <span className={cn("text-sm font-semibold", s.attendanceAtRisk > 0 ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400")}>
                 {s.attendanceAtRisk > 0 ? `${s.attendanceAtRisk} ta fan xavf ostida` : "Hammasi xavfsiz"}
               </span>
             </Link>
@@ -79,7 +79,7 @@ function TimetableCard({ s }: { s: ToolkitSummary }) {
   let headline = "Bugun dars yo'q";
   let tone = "text-foreground";
   if (s.totalClasses === 0) headline = "Jadval bo'sh";
-  else if (s.status.state === "during") { headline = `Hozir: ${s.status.cls.subject}`; tone = "text-emerald-600 dark:text-emerald-400"; }
+  else if (s.status.state === "during") { headline = `Hozir: ${s.status.cls.subject}`; tone = "text-emerald-700 dark:text-emerald-400"; }
   else if (s.status.state === "next") headline = `Keyingi: ${formatDuration(s.status.minsUntil)}dan keyin`;
   else if (s.status.state === "done") headline = "Bugungi darslar tugadi";
 
@@ -183,12 +183,12 @@ function FocusCard({ s }: { s: ToolkitSummary }) {
       <p className="text-xs text-muted-foreground">
         bugun o&apos;qildi
         {s.focusStreak > 1 && (
-          <span className="ml-2 inline-flex items-center gap-0.5 font-semibold text-orange-600 dark:text-orange-400">
+          <span className="ml-2 inline-flex items-center gap-0.5 font-semibold text-orange-700 dark:text-orange-400">
             <Flame size={11} /> {s.focusStreak} kun ketma-ket
           </span>
         )}
       </p>
-      <span className="mt-3 inline-flex w-fit items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white">
+      <span className="mt-3 inline-flex w-fit items-center gap-1 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white">
         Taymerni boshlash <ArrowRight size={12} />
       </span>
     </Link>

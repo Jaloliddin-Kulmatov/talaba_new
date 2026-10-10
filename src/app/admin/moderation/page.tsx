@@ -54,10 +54,10 @@ export default function ModerationPage() {
   }
 
   const tiles: [string, number | undefined, string][] = [
-    ["Foydalanuvchilar", stats?.users, ""], ["Shu hafta qo'shilgan", stats?.users_7d, "text-emerald-600 dark:text-emerald-400"],
+    ["Foydalanuvchilar", stats?.users, ""], ["Shu hafta qo'shilgan", stats?.users_7d, "text-emerald-700 dark:text-emerald-400"],
     ["Faol sharhlar", stats?.reviews, ""], ["Bozordagi e'lonlar", stats?.market_active, ""],
-    ["Ochiq yo'qolgan/topilgan", stats?.lostfound_open, ""], ["Shu hafta yangi kontent", stats?.new_7d, "text-emerald-600 dark:text-emerald-400"],
-    ["Shikoyat qilingan", stats?.flagged, "text-amber-600 dark:text-amber-400"], ["Yashirilgan", stats?.hidden, "text-red-600 dark:text-red-400"],
+    ["Ochiq yo'qolgan/topilgan", stats?.lostfound_open, ""], ["Shu hafta yangi kontent", stats?.new_7d, "text-emerald-700 dark:text-emerald-400"],
+    ["Shikoyat qilingan", stats?.flagged, "text-amber-700 dark:text-amber-400"], ["Yashirilgan", stats?.hidden, "text-red-600 dark:text-red-400"],
   ];
 
   return (

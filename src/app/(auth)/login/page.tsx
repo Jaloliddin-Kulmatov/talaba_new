@@ -100,7 +100,7 @@ export default function LoginPage() {
 
         {/* Notice (e.g. redirected from sign-up because account exists) */}
         {notice && (
-          <div className="mb-4 px-3.5 py-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-400 flex items-start gap-2 animate-fade-in">
+          <div className="mb-4 px-3.5 py-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-600 dark:text-blue-400 flex items-start gap-2 animate-fade-in">
             <Info size={14} className="shrink-0 mt-0.5" />
             <span className="leading-relaxed">{notice}</span>
           </div>
@@ -131,7 +131,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="px-3 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400 animate-fade-in">
+              <div className="px-3 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 animate-fade-in">
                 {error}
               </div>
             )}

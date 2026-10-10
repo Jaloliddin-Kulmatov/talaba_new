@@ -300,7 +300,7 @@ export default function NotificationsPage() {
           <div className="p-12 rounded-2xl border border-white/8 bg-white/3 text-center">
             <Bell size={32} className="text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground font-medium">Barcha bildirishnomalar ko&apos;rilgan!</p>
-            <p className="text-xs text-muted-foreground/60 mt-1 leading-relaxed max-w-xs mx-auto">
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed max-w-xs mx-auto">
               Qo&apos;shilish so&apos;rovingiz tasdiqlanganda, kimdir yangilik joylashtirganda yoki siz klub yaratganda sizga xabar beriladi.
             </p>
           </div>
@@ -322,9 +322,9 @@ export default function NotificationsPage() {
                     : "bg-emerald-500/15"
                   }`}
                 >
-                  {notif.type === "news"     ? <Newspaper    size={16} className="text-violet-400" />
-                  : notif.type === "created" ? <PartyPopper  size={16} className="text-amber-400" />
-                  :                            <UserCheck    size={16} className="text-emerald-400" />}
+                  {notif.type === "news"     ? <Newspaper    size={16} className="text-violet-600 dark:text-violet-400" />
+                  : notif.type === "created" ? <PartyPopper  size={16} className="text-amber-700 dark:text-amber-400" />
+                  :                            <UserCheck    size={16} className="text-emerald-700 dark:text-emerald-400" />}
                 </div>
 
                 {/* Text */}
@@ -337,9 +337,9 @@ export default function NotificationsPage() {
                     </p>
                     <span
                       className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold leading-tight ${
-                        notif.type === "news"     ? "bg-violet-500/15 text-violet-400"
-                        : notif.type === "created" ? "bg-amber-500/15 text-amber-400"
-                        : "bg-emerald-500/15 text-emerald-400"
+                        notif.type === "news"     ? "bg-violet-500/15 text-violet-600 dark:text-violet-400"
+                        : notif.type === "created" ? "bg-amber-500/15 text-amber-700 dark:text-amber-400"
+                        : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
                       }`}
                     >
                       {notif.type === "approval" ? "qabul qilindi ✓"
@@ -347,7 +347,7 @@ export default function NotificationsPage() {
                       : `${notif.count} ta yangi`}
                     </span>
                     {notif.type === "approval" && notif.clubType && (
-                      <span className="text-[10px] text-muted-foreground/50">
+                      <span className="text-[10px] text-muted-foreground">
                         {notif.clubType === "community" ? "hamjamiyat" : "klub"}
                       </span>
                     )}
@@ -367,13 +367,13 @@ export default function NotificationsPage() {
                         : notif.clubId             ? `/community/${notif.clubId}`
                         : "/community"}
                     onClick={() => dismiss(notif)}
-                    className="flex items-center gap-1 text-[11px] font-medium text-blue-400 hover:text-blue-300 transition-colors px-2.5 py-1.5 rounded-xl hover:bg-blue-500/10 border border-transparent hover:border-blue-500/20"
+                    className="flex items-center gap-1 text-[11px] font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors px-2.5 py-1.5 rounded-xl hover:bg-blue-500/10 border border-transparent hover:border-blue-500/20"
                   >
                     Ko&apos;rish <ExternalLink size={10} />
                   </Link>
                   <button
                     onClick={() => dismiss(notif)}
-                    className="text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors px-2.5 py-1"
+                    className="text-[10px] text-muted-foreground hover:text-muted-foreground transition-colors px-2.5 py-1"
                   >
                     Yopish
                   </button>

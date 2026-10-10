@@ -36,7 +36,7 @@ const CATEGORIES: Category[] = [
     desc: "Yaqin atrofdagi davlat va xususiy shifoxonalar",
     query: "shifoxona",
     Icon: Hospital,
-    color: "text-red-500",
+    color: "text-red-600 dark:text-red-400",
     bg: "bg-red-500/10",
   },
   {

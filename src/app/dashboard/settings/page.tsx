@@ -142,11 +142,11 @@ function OwnedClubCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-              isCC ? "bg-violet-500/15 text-violet-400" : "bg-blue-500/15 text-blue-400"
+              isCC ? "bg-violet-500/15 text-violet-600 dark:text-violet-400" : "bg-blue-500/15 text-blue-600 dark:text-blue-400"
             }`}>
               {isCC ? "🌍 Hamjamiyat" : "🎓 Klub"}
             </span>
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 flex items-center gap-1">
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center gap-1">
               <Crown size={9} /> Egasi
             </span>
             <span className="text-[10px] text-muted-foreground flex items-center gap-1">
@@ -164,14 +164,14 @@ function OwnedClubCard({
           <button
             onClick={() => { setEditOpen(v => !v); setMembersOpen(false); }}
             title="Tahrirlash"
-            className={`p-1.5 rounded-lg transition-colors ${editOpen ? "bg-blue-500/15 text-blue-400" : "text-muted-foreground hover:text-blue-400 hover:bg-blue-500/10"}`}
+            className={`p-1.5 rounded-lg transition-colors ${editOpen ? "bg-blue-500/15 text-blue-600 dark:text-blue-400" : "text-muted-foreground hover:text-blue-700 dark:hover:text-blue-400 hover:bg-blue-500/10"}`}
           >
             <Pencil size={13} />
           </button>
           <button
             onClick={toggleMembers}
             title="A'zolarni boshqarish"
-            className={`p-1.5 rounded-lg transition-colors ${membersOpen ? "bg-blue-500/15 text-blue-400" : "text-muted-foreground hover:text-blue-400 hover:bg-blue-500/10"}`}
+            className={`p-1.5 rounded-lg transition-colors ${membersOpen ? "bg-blue-500/15 text-blue-600 dark:text-blue-400" : "text-muted-foreground hover:text-blue-700 dark:hover:text-blue-400 hover:bg-blue-500/10"}`}
           >
             <Users size={13} />
           </button>
@@ -179,7 +179,7 @@ function OwnedClubCard({
             onClick={handleDelete}
             disabled={deleting}
             title="O'chirish"
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
           >
             {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
           </button>
@@ -232,7 +232,7 @@ function OwnedClubCard({
             <input value={editForm.website} onChange={e => setEditForm(p => ({ ...p, website: e.target.value }))} placeholder="https://..." className={iCls} />
           </div>
           {saveMsg && (
-            <p className={`text-xs text-center ${saveMsg === "Saqlandi!" ? "text-emerald-400" : "text-red-400"}`}>{saveMsg}</p>
+            <p className={`text-xs text-center ${saveMsg === "Saqlandi!" ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>{saveMsg}</p>
           )}
           <div className="flex gap-2">
             <button onClick={() => setEditOpen(false)} className="flex-1 py-2 rounded-xl border border-border text-xs font-medium text-muted-foreground hover:bg-muted transition-colors">
@@ -251,7 +251,7 @@ function OwnedClubCard({
         <div className="border-t border-border bg-muted/30 p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-semibold text-foreground">A&apos;zolar</p>
-            <Link href={`/community/${club.id}`} className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">
+            <Link href={`/community/${club.id}`} className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors flex items-center gap-1">
               Sahifani ochish <ExternalLink size={10} />
             </Link>
           </div>
@@ -275,7 +275,7 @@ function OwnedClubCard({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <p className="text-xs font-semibold text-foreground truncate">{displayName}</p>
-                        {isCreator && <Crown size={10} className="text-amber-400 shrink-0" />}
+                        {isCreator && <Crown size={10} className="text-amber-700 dark:text-amber-400 shrink-0" />}
                       </div>
                       <p className="text-[10px] text-muted-foreground truncate">
                         {[m.region, m.university].filter(Boolean).join(" · ")}
@@ -286,7 +286,7 @@ function OwnedClubCard({
                         onClick={() => handleKick(m.user_id, displayName)}
                         disabled={kicking === m.user_id}
                         title="A'zoni chiqarish"
-                        className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0 disabled:opacity-50"
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0 disabled:opacity-50"
                       >
                         {kicking === m.user_id
                           ? <Loader2 size={12} className="animate-spin" />
@@ -330,7 +330,7 @@ function JoinedClubCard({ club, onLeft }: { club: Club; onLeft: () => void }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-0.5">
           <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-            isCC ? "bg-violet-500/15 text-violet-400" : "bg-blue-500/15 text-blue-400"
+            isCC ? "bg-violet-500/15 text-violet-600 dark:text-violet-400" : "bg-blue-500/15 text-blue-600 dark:text-blue-400"
           }`}>
             {isCC ? "Hamjamiyat" : "Klub"}
           </span>
@@ -346,7 +346,7 @@ function JoinedClubCard({ club, onLeft }: { club: Club; onLeft: () => void }) {
       <div className="flex items-center gap-1.5 shrink-0">
         <Link
           href={`/community/${club.id}`}
-          className="p-1.5 rounded-lg text-muted-foreground hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+          className="p-1.5 rounded-lg text-muted-foreground hover:text-blue-700 dark:hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
           title="Ochish"
         >
           <ExternalLink size={13} />
@@ -355,7 +355,7 @@ function JoinedClubCard({ club, onLeft }: { club: Club; onLeft: () => void }) {
           onClick={handleLeave}
           disabled={leaving}
           title="Chiqish"
-          className="p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+          className="p-1.5 rounded-lg text-muted-foreground hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
         >
           {leaving ? <Loader2 size={13} className="animate-spin" /> : <LogOut size={13} />}
         </button>
@@ -466,7 +466,7 @@ export default function ProfilePage() {
                 </span>
               )}
               {user?.funding_type && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400">
                   {user.funding_type}
                 </span>
               )}
@@ -475,7 +475,7 @@ export default function ProfilePage() {
           {/* Sign out */}
           <button
             onClick={() => { logout(); router.push("/"); }}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/10 transition-colors shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium hover:bg-red-500/10 transition-colors shrink-0"
             title="Chiqish"
           >
             <LogOut size={13} />
@@ -553,7 +553,7 @@ export default function ProfilePage() {
               </select>
             </div>
 
-            {profileError && <p className="text-xs text-red-400">{profileError}</p>}
+            {profileError && <p className="text-xs text-red-600 dark:text-red-400">{profileError}</p>}
 
             <button
               type="submit"
@@ -568,7 +568,7 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={() => { logout(); router.push("/"); }}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-500/25 text-red-400 text-sm font-medium hover:bg-red-500/10 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-500/25 text-red-600 dark:text-red-400 text-sm font-medium hover:bg-red-500/10 transition-colors"
             >
               <LogOut size={14} /> Chiqish
             </button>
@@ -576,7 +576,7 @@ export default function ProfilePage() {
             {/* ── Danger zone — delete account ── */}
             <div className="mt-4 pt-5 border-t border-red-500/15">
               <div className="flex items-start gap-3 p-4 rounded-2xl border border-red-500/20 bg-red-500/5">
-                <UserX size={16} className="text-red-400 shrink-0 mt-0.5" />
+                <UserX size={16} className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground mb-0.5">Hisobni o&apos;chirish</p>
                   <p className="text-[11px] text-muted-foreground leading-relaxed mb-2.5">
@@ -585,7 +585,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={() => { setShowDelete(true); setDeleteConfirm(""); setDeleteError(""); }}
-                    className="px-3 py-1.5 rounded-lg bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-semibold hover:bg-red-500/25 transition-colors"
+                    className="px-3 py-1.5 rounded-lg bg-red-500/15 border border-red-500/30 text-red-600 dark:text-red-400 text-xs font-semibold hover:bg-red-500/25 transition-colors"
                   >
                     Hisobimni o&apos;chirish…
                   </button>
@@ -606,12 +606,12 @@ export default function ProfilePage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="px-5 py-4 border-b border-red-500/20 bg-red-500/5 flex items-center gap-2.5">
-                <UserX size={16} className="text-red-400" />
+                <UserX size={16} className="text-red-600 dark:text-red-400" />
                 <h2 className="text-sm font-bold text-foreground">TALABA hisobingiz o&apos;chirilsinmi?</h2>
               </div>
               <div className="p-5 space-y-4">
                 <p className="text-sm text-foreground leading-relaxed">
-                  Bu amal <span className="font-bold text-red-400">qaytarib bo&apos;lmaydigan</span>. Biz quyidagilarni o&apos;chiramiz:
+                  Bu amal <span className="font-bold text-red-600 dark:text-red-400">qaytarib bo&apos;lmaydigan</span>. Biz quyidagilarni o&apos;chiramiz:
                 </p>
                 <ul className="text-xs text-muted-foreground space-y-1.5 list-disc list-inside leading-relaxed">
                   <li>Profilingiz va login ma&apos;lumotlaringiz</li>
@@ -621,7 +621,7 @@ export default function ProfilePage() {
                   <li>AI bilan suhbat tarixingiz</li>
                 </ul>
                 <p className="text-xs text-muted-foreground">
-                  Tasdiqlash uchun quyiga <code className="px-1.5 py-0.5 rounded bg-muted text-red-400 font-bold">O&apos;CHIRISH</code> deb yozing.
+                  Tasdiqlash uchun quyiga <code className="px-1.5 py-0.5 rounded bg-muted text-red-600 dark:text-red-400 font-bold">O&apos;CHIRISH</code> deb yozing.
                 </p>
                 <input
                   type="text"
@@ -632,7 +632,7 @@ export default function ProfilePage() {
                   className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500/50 transition-all font-mono"
                 />
                 {deleteError && (
-                  <p className="text-xs text-red-400">{deleteError}</p>
+                  <p className="text-xs text-red-600 dark:text-red-400">{deleteError}</p>
                 )}
                 <div className="flex gap-2 pt-1">
                   <button
@@ -678,7 +678,7 @@ export default function ProfilePage() {
                 <span className="text-xs font-normal text-muted-foreground">({count})</span>
               </h2>
               {createLink && (
-                <Link href="/community" className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                <Link href="/community" className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
                   <Plus size={11} /> Yaratish
                 </Link>
               )}
@@ -688,7 +688,7 @@ export default function ProfilePage() {
           const EmptyState = ({ msg, link }: { msg: string; link: string }) => (
             <div className="py-5 rounded-2xl border border-dashed border-border text-center">
               <p className="text-xs text-muted-foreground">{msg}</p>
-              <Link href={link} className="mt-1 inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors">
+              <Link href={link} className="mt-1 inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
                 Ko&apos;rish →
               </Link>
             </div>

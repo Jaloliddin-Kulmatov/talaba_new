@@ -84,7 +84,7 @@ export default function ToolsHub() {
                   <span
                     className={cn(
                       "truncate text-xs font-medium",
-                      line.tone === "warn" ? "text-amber-600 dark:text-amber-400" : line.tone === "ok" ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
+                      line.tone === "warn" ? "text-amber-700 dark:text-amber-400" : line.tone === "ok" ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground",
                     )}
                   >
                     {line.text}

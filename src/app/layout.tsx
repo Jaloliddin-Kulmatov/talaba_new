@@ -3,8 +3,8 @@ import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
-import FeedbackWidget from "@/components/feedback/feedback-widget";
-import ChatWidget from "@/components/ai/chat-widget";
+import LazyWidgets from "@/components/layout/lazy-widgets";
+import SkipLink from "@/components/layout/skip-link";
 import SplashScreen from "@/components/ui/splash-screen";
 import VisitTracker from "@/components/analytics/visit-tracker";
 import SyncManager from "@/components/sync/sync-manager";
@@ -19,7 +19,6 @@ const display = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-displa
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
   themeColor: [
     { media: "(prefers-color-scheme: dark)", color: "#0b1220" },
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
@@ -61,13 +60,13 @@ export const metadata: Metadata = {
     url: "https://talaba.uz",
     siteName: "TALABA",
     locale: "uz_UZ",
-    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "TALABA — O'zbek talabalari uchun platforma" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "TALABA — O'zbek talabalari uchun platforma" }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "TALABA — O'zbek talabalari uchun platforma",
     description: "Hamjamiyat, amaliyot va AI yordamchi — o'zbek talabalari uchun bir joyda.",
-    images: ["/icon-512.png"],
+    images: ["/og.png"],
   },
   robots: {
     index: true,
@@ -87,6 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       storageKey="talaba-theme"
     >
       <AuthProvider>
+        <SkipLink />
         <SplashScreen />
         <VisitTracker />
         <SyncManager />
@@ -94,11 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <MobileBottomNav />
         <InstallPrompt />
         <PwaStatus />
-        <FeedbackWidget />
-        {/* AI floating button — desktop only (hidden on mobile) */}
-        <div className="hidden md:block">
-          <ChatWidget />
-        </div>
+        <LazyWidgets />
       </AuthProvider>
     </ThemeProvider>
   );

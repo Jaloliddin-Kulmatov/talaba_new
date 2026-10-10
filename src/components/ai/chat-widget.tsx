@@ -307,7 +307,7 @@ export default function ChatWidget() {
 
                 {error && (
                   <div className="flex gap-2">
-                    <div className="flex-1 px-3 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-400 whitespace-pre-wrap leading-relaxed">
+                    <div className="flex-1 px-3 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 whitespace-pre-wrap leading-relaxed">
                       {error}
                     </div>
                   </div>
@@ -336,7 +336,7 @@ export default function ChatWidget() {
                     <Send size={12} className="text-white" />
                   </button>
                 </div>
-                <p className="text-[9px] text-muted-foreground/50 text-center mt-1.5">
+                <p className="text-[9px] text-muted-foreground text-center mt-1.5">
                   TALABA AI — javoblar xato bo'lishi mumkin, muhim ma'lumotni rasmiy manbada tekshiring
                 </p>
               </div>
@@ -448,7 +448,7 @@ export default function ChatWidget() {
 
             {error && (
               <div className="flex gap-2">
-                <div className="flex-1 px-3 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-400 whitespace-pre-wrap leading-relaxed">
+                <div className="flex-1 px-3 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 whitespace-pre-wrap leading-relaxed">
                   {error}
                 </div>
               </div>

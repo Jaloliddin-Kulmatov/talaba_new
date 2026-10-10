@@ -14,10 +14,10 @@ function parseStatValue(value: string): { num: number; suffix: string } {
 }
 
 const statMeta = [
-  { icon: Users, color: "text-blue-400", bg: "bg-blue-500/10", sublabel: "Barcha hamkor universitetlar bo'ylab" },
-  { icon: Building2, color: "text-violet-400", bg: "bg-violet-500/10", sublabel: "Respublika bo'ylab yirik universitetlar" },
-  { icon: TrendingUp, color: "text-cyan-400", bg: "bg-cyan-500/10", sublabel: "Har kuni yangilanadi" },
-  { icon: Globe2, color: "text-emerald-400", bg: "bg-emerald-500/10", sublabel: "Butun O'zbekiston bo'ylab hamjamiyat" },
+  { icon: Users, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-500/10", sublabel: "Barcha hamkor universitetlar bo'ylab" },
+  { icon: Building2, color: "text-violet-600 dark:text-violet-400", bg: "bg-violet-500/10", sublabel: "Respublika bo'ylab yirik universitetlar" },
+  { icon: TrendingUp, color: "text-cyan-700 dark:text-cyan-400", bg: "bg-cyan-500/10", sublabel: "Har kuni yangilanadi" },
+  { icon: Globe2, color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-500/10", sublabel: "Butun O'zbekiston bo'ylab hamjamiyat" },
 ];
 
 const stats = PLATFORM_STATS.map((s, i) => {

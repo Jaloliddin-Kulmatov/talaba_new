@@ -15,7 +15,7 @@ export function Field({
     <label className={cn("block", className)}>
       <span className="mb-1.5 block text-xs font-medium text-muted-foreground">{label}</span>
       {children}
-      {hint ? <span className="mt-1 block text-[11px] text-muted-foreground/80">{hint}</span> : null}
+      {hint ? <span className="mt-1 block text-[11px] text-muted-foreground">{hint}</span> : null}
     </label>
   );
 }
@@ -129,7 +129,7 @@ export function EmptyState({
       <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
         <Icon size={22} />
       </div>
-      <h3 className="text-base font-semibold text-foreground">{title}</h3>
+      <h2 className="text-base font-semibold text-foreground">{title}</h2>
       {text ? <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">{text}</p> : null}
       {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
     </div>

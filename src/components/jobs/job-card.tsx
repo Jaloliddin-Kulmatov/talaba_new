@@ -95,9 +95,9 @@ export default function JobCard({ job, featured = false, match }: JobCardProps) 
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <h3 className="text-sm font-semibold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              <h2 className="text-sm font-semibold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                 {job.title}
-              </h3>
+              </h2>
               {job.isNew && (
                 <Badge variant="new" className="text-[10px] px-1.5 py-0 h-4">Yangi</Badge>
               )}

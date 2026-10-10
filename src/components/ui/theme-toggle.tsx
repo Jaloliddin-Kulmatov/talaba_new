@@ -27,7 +27,7 @@ export function ThemeToggle({ className }: { className?: string }) {
         "relative h-8 w-8 rounded-lg border flex items-center justify-center transition-all duration-200",
         "hover:scale-105 active:scale-95",
         isDark
-          ? "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-amber-400"
+          ? "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-amber-700 dark:text-amber-400"
           : "bg-slate-100 border-slate-200 hover:bg-slate-200 text-blue-600",
         className
       )}

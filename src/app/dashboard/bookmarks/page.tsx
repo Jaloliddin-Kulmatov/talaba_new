@@ -38,7 +38,7 @@ export default function BookmarksPage() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="h-10 w-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-            <Bookmark size={18} className="text-blue-400" />
+            <Bookmark size={18} className="text-blue-600 dark:text-blue-400" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-foreground">Saqlanganlar</h1>
@@ -66,7 +66,7 @@ export default function BookmarksPage() {
               <t.icon size={14} />
               {t.label}
               {t.count > 0 && (
-                <span className="ml-0.5 text-[10px] bg-blue-500/15 text-blue-400 px-1.5 py-0.5 rounded-full font-semibold">
+                <span className="ml-0.5 text-[10px] bg-blue-500/15 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full font-semibold">
                   {t.count}
                 </span>
               )}
@@ -126,7 +126,7 @@ export default function BookmarksPage() {
                     </div>
                     <button
                       onClick={() => removePost(p.id)}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0"
+                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-muted-foreground hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0"
                       title="Bookmarkni olib tashlash"
                     >
                       <Trash2 size={13} />
@@ -155,7 +155,7 @@ function Empty({ icon, title, sub, href, cta }: {
       <p className="text-xs text-muted-foreground">{sub}</p>
       <Link
         href={href}
-        className="inline-flex items-center gap-1.5 mt-2 px-4 py-2 rounded-xl bg-blue-500/10 text-blue-400 text-sm font-medium hover:bg-blue-500/20 transition-colors border border-blue-500/20"
+        className="inline-flex items-center gap-1.5 mt-2 px-4 py-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-medium hover:bg-blue-500/20 transition-colors border border-blue-500/20"
       >
         {cta} →
       </Link>

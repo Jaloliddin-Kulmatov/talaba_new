@@ -182,7 +182,7 @@ function CourseDialog({
                   <Stars value={r.rating} size={14} />
                   <span className="text-xs text-muted-foreground">{r.is_mine ? "Siz" : "Anonim talaba"} · {timeAgoUz(r.created_at, now)}</span>
                   {r.recommend !== null && (
-                    <span className={cn("ml-auto inline-flex items-center gap-1 text-xs font-medium", r.recommend ? "text-emerald-600" : "text-red-600")}>
+                    <span className={cn("ml-auto inline-flex items-center gap-1 text-xs font-medium", r.recommend ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400")}>
                       {r.recommend ? <ThumbsUp size={12} /> : <ThumbsDown size={12} />} {r.recommend ? "Tavsiya qiladi" : "Tavsiya qilmaydi"}
                     </span>
                   )}

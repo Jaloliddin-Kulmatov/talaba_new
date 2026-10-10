@@ -88,7 +88,7 @@ export default function TestimonialsSection() {
                   <p className="text-xs text-muted-foreground">
                     {t.role} · {t.university}
                   </p>
-                  <p className="text-xs text-muted-foreground/60">{t.region}</p>
+                  <p className="text-xs text-muted-foreground">{t.region}</p>
                 </div>
               </div>
             </div>

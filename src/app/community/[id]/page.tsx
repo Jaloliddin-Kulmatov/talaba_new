@@ -607,7 +607,7 @@ export default function CommunityDetailPage() {
                 /* Locked */
                 <div className="flex flex-col items-center justify-center flex-1 gap-5 p-8 text-center">
                   <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center">
-                    <Lock size={24} className="text-muted-foreground/50" />
+                    <Lock size={24} className="text-muted-foreground" />
                   </div>
                   <div>
                     <p className="text-base font-semibold text-foreground mb-1">
@@ -756,7 +756,7 @@ export default function CommunityDetailPage() {
                         className="text-blue-500 shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <span className="text-xs font-semibold text-blue-500">
+                        <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
                           {replyTo.author_name}{" "}
                         </span>
                         <span className="text-xs text-muted-foreground line-clamp-1">
@@ -961,7 +961,7 @@ export default function CommunityDetailPage() {
                 {/* Members-only info */}
                 {isApproved && (club.telegram_link || club.contact) && (
                   <div className="p-5 rounded-2xl border border-blue-500/20 bg-blue-500/5 space-y-3">
-                    <h3 className="text-sm font-semibold text-blue-500 flex items-center gap-1.5">
+                    <h3 className="text-sm font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
                       <Lock size={12} /> Faqat a'zolar uchun
                     </h3>
                     {club.telegram_link && (

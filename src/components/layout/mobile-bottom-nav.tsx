@@ -34,7 +34,7 @@ export default function MobileBottomNav() {
   if (!user) return null;
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-50 md:hidden">
+    <nav aria-label="Pastki menyu" className="fixed bottom-0 inset-x-0 z-50 md:hidden">
       {/* Frosted glass bar */}
       <div className="bg-background/90 backdrop-blur-xl border-t border-border">
         <div className="flex items-stretch">

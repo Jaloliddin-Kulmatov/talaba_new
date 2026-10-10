@@ -283,7 +283,7 @@ function PostCard({ post, currentUserId, onDelete }: {
             <span className="text-sm font-semibold text-foreground">{label}</span>
             <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium border ${
               post.posted_as_type === "university" ? "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20" :
-              post.posted_as_type === "club"       ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
+              post.posted_as_type === "club"       ? "text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20" :
               post.posted_as_type === "community"  ? "text-violet-600 dark:text-violet-400 bg-violet-500/10 border-violet-500/20" :
                                                     "text-muted-foreground bg-muted border-border"
             }`}>
@@ -298,7 +298,7 @@ function PostCard({ post, currentUserId, onDelete }: {
           <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">{post.content}</p>
         </div>
         {isOwn && (
-          <button onClick={() => onDelete(post.id)} className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0">
+          <button onClick={() => onDelete(post.id)} className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-muted-foreground hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10 transition-all shrink-0">
             <Trash2 size={13} />
           </button>
         )}
@@ -510,7 +510,7 @@ export default function PostFeed() {
             className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none leading-relaxed"
           />
           <div className="flex items-center justify-between">
-            <span className={`text-[11px] ${content.length > 1800 ? "text-red-400" : "text-muted-foreground"}`}>{content.length}/2000</span>
+            <span className={`text-[11px] ${content.length > 1800 ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}>{content.length}/2000</span>
             <button
               onClick={handlePost}
               disabled={posting || !content.trim()}

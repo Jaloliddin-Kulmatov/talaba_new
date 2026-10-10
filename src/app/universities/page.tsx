@@ -61,7 +61,7 @@ export default function UniversitiesPage() {
               {[
                 { value: `${UNIVERSITIES.length}+`, label: "Universitet", color: "text-violet-500 dark:text-violet-400" },
                 { value: "10,000+", label: "Talaba", color: "text-blue-600 dark:text-blue-400" },
-                { value: `${REGIONS.length}`, label: "Viloyat", color: "text-cyan-600 dark:text-cyan-400" },
+                { value: `${REGIONS.length}`, label: "Viloyat", color: "text-cyan-700 dark:text-cyan-400" },
               ].map(s => (
                 <div key={s.label} className="text-center">
                   <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
@@ -99,8 +99,8 @@ export default function UniversitiesPage() {
                     {[
                       { icon: Users, label: `${nuu.students.toLocaleString()}+ talaba`, color: "text-blue-600 dark:text-blue-400" },
                       { icon: MapPin, label: "Toshkent shahri", color: "text-violet-500 dark:text-violet-400" },
-                      { icon: GraduationCap, label: "Ko'plab fakultet va yo'nalishlar", color: "text-cyan-600 dark:text-cyan-400" },
-                      { icon: Globe, label: "Almashinuv va qo'shma dasturlar", color: "text-emerald-600 dark:text-emerald-400" },
+                      { icon: GraduationCap, label: "Ko'plab fakultet va yo'nalishlar", color: "text-cyan-700 dark:text-cyan-400" },
+                      { icon: Globe, label: "Almashinuv va qo'shma dasturlar", color: "text-emerald-700 dark:text-emerald-400" },
                     ].map(({ icon: Icon, label, color }) => (
                       <div key={label} className="flex items-center gap-2 text-xs text-foreground/70">
                         <Icon size={13} className={color} />
@@ -209,7 +209,7 @@ export default function UniversitiesPage() {
                         {uni.shortName}
                       </h3>
                       {uni.intl && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">Xorijiy filial</span>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400">Xorijiy filial</span>
                       )}
                     </div>
                     <p className="text-[11px] text-muted-foreground leading-tight">{uni.name}</p>
@@ -227,7 +227,7 @@ export default function UniversitiesPage() {
                     <span>{uni.students.toLocaleString()} talaba</span>
                   </div>
                 </div>
-                <p className="text-[10px] text-muted-foreground/60 mt-1.5">{uni.region}</p>
+                <p className="text-[10px] text-muted-foreground mt-1.5">{uni.region}</p>
               </a>
             ))}
           </div>
@@ -241,7 +241,7 @@ export default function UniversitiesPage() {
 
           {/* Ambassador CTA */}
           <div className="mt-12 relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-r from-violet-50 to-blue-50 dark:from-violet-950/40 dark:to-blue-950/40 p-8 text-center">
-            <Star size={28} className="text-violet-400/50 mx-auto mb-4" />
+            <Star size={28} className="text-violet-600 dark:text-violet-400/50 mx-auto mb-4" />
             <h2 className="text-lg font-bold text-foreground mb-2">Elchi bo'ling</h2>
             <p className="text-muted-foreground text-sm max-w-md mx-auto mb-5">
               Universitetingizni TALABA'da vakillik qiling. Talabalarga yordam bering, tarmog'ingizni kengaytiring va e'tirof qozoning.
