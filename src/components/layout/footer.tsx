@@ -13,6 +13,11 @@ function TelegramIcon({ size = 14 }: { size?: number }) {
 
 const footerLinks = {
   Platforma: [
+    { label: "Dars jadvali", href: "/tools/timetable" },
+    { label: "GPA kalkulyator", href: "/tools/gpa" },
+    { label: "Vazifa va imtihonlar", href: "/tools/planner" },
+    { label: "Fan sharhlari", href: "/reviews" },
+    { label: "Talaba bozori", href: "/market" },
     { label: "Klublar", href: "/community" },
     { label: "Ish va amaliyot", href: "/jobs" },
     { label: "Chat / Savol-javob", href: "/chat" },

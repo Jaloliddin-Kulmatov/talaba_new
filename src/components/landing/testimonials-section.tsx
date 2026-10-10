@@ -56,7 +56,7 @@ const testimonials = [
 export default function TestimonialsSection() {
   return (
     <section className="py-24 px-4 sm:px-6 relative overflow-hidden" id="testimonials">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-violet-950/10 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-500/[0.04] to-transparent pointer-events-none" />
 
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-14">
@@ -71,7 +71,7 @@ export default function TestimonialsSection() {
           {testimonials.map((t) => (
             <div
               key={t.name}
-              className="break-inside-avoid p-6 rounded-2xl bg-white/3 border border-white/8 hover:border-white/15 transition-all duration-300 group"
+              className="break-inside-avoid p-6 rounded-2xl bg-card border border-border shadow-sm hover:border-blue-500/30 transition-all duration-300 group"
             >
               <Quote size={24} className="text-blue-500/40 mb-3" />
 

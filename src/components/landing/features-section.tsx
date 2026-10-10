@@ -88,7 +88,7 @@ export default function FeaturesSection() {
           <Badge variant="default" className="mb-4 text-xs px-4 py-1">
             Kerak bo&apos;lgan hamma narsa
           </Badge>
-          <h2 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground mb-4">
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground mb-4">
             Talabalik safarining har bosqichi uchun
             <span className="gradient-text"> yaratilgan</span>
           </h2>
@@ -105,7 +105,7 @@ export default function FeaturesSection() {
               <Link
                 key={feature.title}
                 href={feature.href}
-                className="group relative p-6 rounded-2xl bg-white/3 border border-white/8 hover:border-white/15 hover:bg-white/5 transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+                className="group relative p-6 rounded-2xl bg-card border border-border shadow-sm hover:border-blue-500/30 hover:shadow-card transition-all duration-300 hover:-translate-y-1 overflow-hidden"
               >
                 {/* Hover glow */}
                 <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
@@ -117,11 +117,11 @@ export default function FeaturesSection() {
                   <Icon size={20} className="text-white" />
                 </div>
 
-                <Badge variant="outline" className="text-[10px] mb-3 border-white/15">
+                <Badge variant="outline" className="text-[10px] mb-3">
                   {feature.badge}
                 </Badge>
 
-                <h3 className="text-base font-semibold text-foreground mb-2 group-hover:text-blue-400 transition-colors">
+                <h3 className="text-base font-semibold text-foreground mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                   {feature.title}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
@@ -137,7 +137,7 @@ export default function FeaturesSection() {
                   ))}
                 </ul>
 
-                <div className="flex items-center gap-1 mt-5 text-xs font-medium text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 mt-5 text-xs font-medium text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
                   Batafsil
                   <ArrowRight size={12} />
                 </div>

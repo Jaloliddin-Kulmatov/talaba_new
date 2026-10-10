@@ -14,10 +14,10 @@ const Card = React.forwardRef<
     className={cn(
       "rounded-2xl",
       glass
-        ? "bg-white/5 backdrop-blur-xl border border-white/10"
-        : "bg-card border border-white/8",
+        ? "glass"
+        : "bg-card border border-border shadow-sm",
       bordered && "border-gradient",
-      hover && "transition-all duration-300 hover:-translate-y-1 hover:shadow-glow cursor-pointer",
+      hover && "transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500/30 hover:shadow-card cursor-pointer",
       className
     )}
     {...props}

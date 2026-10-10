@@ -10,16 +10,16 @@ interface Message {
 }
 
 const QUICK = [
-  "How do I extend my D-2 visa?",
-  "Open a Kakao Bank account",
-  "Find part-time jobs near my campus",
-  "Translate this Korean form for me",
+  "Grant statusimni qanday tekshiraman?",
+  "Talabalar turargohiga qanday joylashaman?",
+  "Stipendiya uchun qanday hujjatlar kerak?",
+  "IELTS ga qanday tayyorlanaman?",
 ];
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
 async function sendToAI(message: string, history: Message[]): Promise<string> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("icon_token") : null;
+  const token = typeof window !== "undefined" ? localStorage.getItem("talaba_token") : null;
   const url = `${API_BASE}/ai/chat`;
   const body = JSON.stringify({
     message,
@@ -40,7 +40,7 @@ async function sendToAI(message: string, history: Message[]): Promise<string> {
       const res = await fetch(url, { method: "POST", headers, body, signal: ctl.signal });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "AI service error");
+        throw new Error(err.error || "AI xizmatida xatolik yuz berdi");
       }
       const data = await res.json();
       return data.reply as string;
@@ -162,8 +162,8 @@ export default function ChatWidget() {
       const isNetwork = !raw || raw.toLowerCase().includes("fetch") || raw.toLowerCase().includes("network");
       setError(
         isNetwork
-          ? "Couldn't reach ICOM AI right now. The service may be waking up — please try again in a few seconds."
-          : raw || "Something went wrong. Please try again."
+          ? "Hozir TALABA AI bilan bog'lanib bo'lmadi. Xizmat uyg'onayotgan bo'lishi mumkin — bir necha soniyadan keyin qayta urinib ko'ring."
+          : raw || "Nimadir noto'g'ri ketdi. Qayta urinib ko'ring."
       );
     } finally {
       setLoading(false);
@@ -185,7 +185,7 @@ export default function ChatWidget() {
           onClick={() => { if (!didDrag.current) setOpen(true); }}
           aria-label="Open AI Assistant"
           style={{ left: pos.x, top: pos.y, transform: "translate(-50%, -50%)" }}
-          className="fixed z-50 flex w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white items-center justify-center shadow-[0_4px_24px_rgba(99,102,241,0.5)] hover:shadow-[0_4px_32px_rgba(99,102,241,0.7)] hover:scale-105 active:scale-95 transition-shadow duration-200 animate-pulse-glow cursor-grab active:cursor-grabbing select-none"
+          className="fixed z-50 flex w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-violet-600 text-white items-center justify-center shadow-[0_4px_24px_rgba(37,99,235,0.5)] hover:shadow-[0_4px_32px_rgba(37,99,235,0.7)] hover:scale-105 active:scale-95 transition-shadow duration-200 animate-pulse-glow cursor-grab active:cursor-grabbing select-none"
         >
           <Sparkles size={22} />
         </button>
@@ -203,14 +203,14 @@ export default function ChatWidget() {
           <div
             onMouseDown={onMouseDown}
             onTouchStart={onTouchStart}
-            className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-indigo-500/10 to-violet-500/10 shrink-0 cursor-grab active:cursor-grabbing select-none">
+            className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-blue-500/10 to-violet-500/10 shrink-0 cursor-grab active:cursor-grabbing select-none">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shrink-0">
                 <Sparkles size={14} className="text-white" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-foreground leading-tight">ICOM AI</p>
-                <p className="text-[10px] text-emerald-500 leading-tight">Your Korea guide</p>
+                <p className="text-xs font-semibold text-foreground leading-tight">TALABA AI</p>
+                <p className="text-[10px] text-emerald-500 leading-tight">Talaba hayoti bo'yicha yordamchi</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -218,7 +218,7 @@ export default function ChatWidget() {
                 <button
                   onClick={() => { setMessages([]); setError(""); }}
                   className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                  title="Clear chat"
+                  title="Suhbatni tozalash" aria-label="Suhbatni tozalash"
                 >
                   <RefreshCw size={12} />
                 </button>
@@ -245,19 +245,19 @@ export default function ChatWidget() {
                 {/* Welcome */}
                 {messages.length === 0 && (
                   <div className="text-center py-4 animate-fade-in">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 border border-indigo-500/20 flex items-center justify-center mx-auto mb-3">
-                      <Sparkles size={22} className="text-indigo-500" />
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-violet-500/20 border border-blue-500/20 flex items-center justify-center mx-auto mb-3">
+                      <Sparkles size={22} className="text-blue-500" />
                     </div>
-                    <p className="text-sm font-semibold text-foreground mb-1">Hi! I&apos;m ICOM AI</p>
+                    <p className="text-sm font-semibold text-foreground mb-1">Salom! Men TALABA AI</p>
                     <p className="text-xs text-muted-foreground max-w-[220px] mx-auto leading-relaxed">
-                      Ask me anything about life in Korea — visa, banking, housing, jobs, or translation.
+                      O'zbekistondagi talaba hayoti haqida so'rang — qabul va DTM, turargoh, stipendiya, ish yoki til o'rganish.
                     </p>
                     <div className="mt-4 flex flex-wrap gap-1.5 justify-center">
                       {QUICK.map((q) => (
                         <button
                           key={q}
                           onClick={() => send(q)}
-                          className="text-[11px] px-2.5 py-1 rounded-full border border-indigo-500/25 bg-indigo-500/8 text-indigo-500 dark:text-indigo-400 hover:bg-indigo-500/15 transition-colors"
+                          className="text-[11px] px-2.5 py-1 rounded-full border border-blue-500/25 bg-blue-500/8 text-blue-500 dark:text-blue-400 hover:bg-blue-500/15 transition-colors"
                         >
                           {q}
                         </button>
@@ -270,7 +270,7 @@ export default function ChatWidget() {
                   <div key={m.id} className={`flex gap-2 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                       m.role === "assistant"
-                        ? "bg-gradient-to-br from-indigo-500 to-violet-600"
+                        ? "bg-gradient-to-br from-blue-500 to-violet-600"
                         : "bg-muted border border-border"
                     }`}>
                       {m.role === "assistant"
@@ -280,7 +280,7 @@ export default function ChatWidget() {
                     </div>
                     <div className={`max-w-[80%] rounded-2xl px-3 py-2.5 text-xs leading-relaxed whitespace-pre-wrap ${
                       m.role === "user"
-                        ? "bg-indigo-500 text-white rounded-tr-sm"
+                        ? "bg-blue-500 text-white rounded-tr-sm"
                         : "bg-muted text-foreground rounded-tl-sm border border-border"
                     }`}>
                       {m.content}
@@ -290,14 +290,14 @@ export default function ChatWidget() {
 
                 {loading && (
                   <div className="flex gap-2">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shrink-0">
                       <Bot size={12} className="text-white" />
                     </div>
                     <div className="bg-muted border border-border rounded-2xl rounded-tl-sm px-3 py-2.5 flex items-center gap-1">
                       {[0, 1, 2].map((i) => (
                         <span
                           key={i}
-                          className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce"
+                          className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce"
                           style={{ animationDelay: `${i * 0.15}s` }}
                         />
                       ))}
@@ -318,26 +318,26 @@ export default function ChatWidget() {
 
               {/* Input */}
               <div className="px-3 pb-3 pt-2 border-t border-border shrink-0">
-                <div className="flex items-center gap-2 bg-muted rounded-xl border border-border px-3 py-2 focus-within:border-indigo-500/40 transition-colors">
+                <div className="flex items-center gap-2 bg-muted rounded-xl border border-border px-3 py-2 focus-within:border-blue-500/40 transition-colors">
                   <input
                     ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKey}
-                    placeholder="Ask anything about Korea..."
+                    placeholder="Savolingizni yozing..."
                     disabled={loading}
                     className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
                   />
                   <button
                     onClick={() => send(input)}
                     disabled={!input.trim() || loading}
-                    className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center disabled:opacity-40 hover:opacity-90 active:scale-90 transition-all shrink-0"
+                    className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center disabled:opacity-40 hover:opacity-90 active:scale-90 transition-all shrink-0"
                   >
                     <Send size={12} className="text-white" />
                   </button>
                 </div>
                 <p className="text-[9px] text-muted-foreground/50 text-center mt-1.5">
-                  ICOM AI
+                  TALABA AI — javoblar xato bo'lishi mumkin, muhim ma'lumotni rasmiy manbada tekshiring
                 </p>
               </div>
             </>
@@ -352,14 +352,14 @@ export default function ChatWidget() {
       {open && (
         <div className="fixed inset-0 z-50 md:hidden flex flex-col bg-card animate-slide-up">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-indigo-500/10 to-violet-500/10 shrink-0">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-blue-500/10 to-violet-500/10 shrink-0">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shrink-0">
                 <Sparkles size={15} className="text-white" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground leading-tight">ICOM AI</p>
-                <p className="text-[10px] text-emerald-500 leading-tight">Your Korea guide</p>
+                <p className="text-sm font-semibold text-foreground leading-tight">TALABA AI</p>
+                <p className="text-[10px] text-emerald-500 leading-tight">Talaba hayoti bo'yicha yordamchi</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -367,7 +367,7 @@ export default function ChatWidget() {
                 <button
                   onClick={() => { setMessages([]); setError(""); }}
                   className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                  title="Clear chat"
+                  title="Suhbatni tozalash" aria-label="Suhbatni tozalash"
                 >
                   <RefreshCw size={14} />
                 </button>
@@ -386,19 +386,19 @@ export default function ChatWidget() {
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 scrollbar-thin">
             {messages.length === 0 && (
               <div className="text-center py-8 animate-fade-in">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 border border-indigo-500/20 flex items-center justify-center mx-auto mb-3">
-                  <Sparkles size={26} className="text-indigo-500" />
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-violet-500/20 border border-blue-500/20 flex items-center justify-center mx-auto mb-3">
+                  <Sparkles size={26} className="text-blue-500" />
                 </div>
-                <p className="text-base font-semibold text-foreground mb-1">Hi! I&apos;m ICOM AI</p>
+                <p className="text-base font-semibold text-foreground mb-1">Salom! Men TALABA AI</p>
                 <p className="text-xs text-muted-foreground max-w-[260px] mx-auto leading-relaxed">
-                  Ask me anything about life in Korea — visa, banking, housing, jobs, or translation.
+                  O'zbekistondagi talaba hayoti haqida so'rang — qabul va DTM, turargoh, stipendiya, ish yoki til o'rganish.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-1.5 justify-center px-4">
                   {QUICK.map((q) => (
                     <button
                       key={q}
                       onClick={() => send(q)}
-                      className="text-[11px] px-2.5 py-1.5 rounded-full border border-indigo-500/25 bg-indigo-500/8 text-indigo-500 dark:text-indigo-400 hover:bg-indigo-500/15 transition-colors"
+                      className="text-[11px] px-2.5 py-1.5 rounded-full border border-blue-500/25 bg-blue-500/8 text-blue-500 dark:text-blue-400 hover:bg-blue-500/15 transition-colors"
                     >
                       {q}
                     </button>
@@ -411,7 +411,7 @@ export default function ChatWidget() {
               <div key={m.id} className={`flex gap-2 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                   m.role === "assistant"
-                    ? "bg-gradient-to-br from-indigo-500 to-violet-600"
+                    ? "bg-gradient-to-br from-blue-500 to-violet-600"
                     : "bg-muted border border-border"
                 }`}>
                   {m.role === "assistant"
@@ -421,7 +421,7 @@ export default function ChatWidget() {
                 </div>
                 <div className={`max-w-[80%] rounded-2xl px-3 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
                   m.role === "user"
-                    ? "bg-indigo-500 text-white rounded-tr-sm"
+                    ? "bg-blue-500 text-white rounded-tr-sm"
                     : "bg-muted text-foreground rounded-tl-sm border border-border"
                 }`}>
                   {m.content}
@@ -431,14 +431,14 @@ export default function ChatWidget() {
 
             {loading && (
               <div className="flex gap-2">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center shrink-0">
                   <Bot size={13} className="text-white" />
                 </div>
                 <div className="bg-muted border border-border rounded-2xl rounded-tl-sm px-3 py-2.5 flex items-center gap-1">
                   {[0, 1, 2].map((i) => (
                     <span
                       key={i}
-                      className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce"
+                      className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce"
                       style={{ animationDelay: `${i * 0.15}s` }}
                     />
                   ))}
@@ -462,19 +462,19 @@ export default function ChatWidget() {
             className="px-3 pt-2 border-t border-border shrink-0"
             style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
           >
-            <div className="flex items-center gap-2 bg-muted rounded-xl border border-border px-3 py-2.5 focus-within:border-indigo-500/40 transition-colors">
+            <div className="flex items-center gap-2 bg-muted rounded-xl border border-border px-3 py-2.5 focus-within:border-blue-500/40 transition-colors">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKey}
-                placeholder="Ask anything about Korea..."
+                placeholder="Savolingizni yozing..."
                 disabled={loading}
                 className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:opacity-50"
               />
               <button
                 onClick={() => send(input)}
                 disabled={!input.trim() || loading}
-                className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center disabled:opacity-40 hover:opacity-90 active:scale-90 transition-all shrink-0"
+                className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center disabled:opacity-40 hover:opacity-90 active:scale-90 transition-all shrink-0"
               >
                 <Send size={13} className="text-white" />
               </button>

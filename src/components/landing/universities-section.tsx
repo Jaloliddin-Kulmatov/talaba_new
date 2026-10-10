@@ -58,7 +58,7 @@ export default function UniversitiesSection() {
                   href={uni.website || "/universities"}
                   target={hasWebsite ? "_blank" : undefined}
                   rel={hasWebsite ? "noopener noreferrer" : undefined}
-                  className="group p-4 rounded-2xl border border-white/8 bg-white/3 hover:border-blue-500/30 hover:bg-white/6 transition-all duration-300 hover:-translate-y-0.5"
+                  className="group p-4 rounded-2xl border border-border bg-card shadow-sm hover:border-blue-500/30 hover:shadow-card transition-all duration-300 hover:-translate-y-0.5"
                 >
                   {/* Color stripe */}
                   <div
@@ -84,7 +84,7 @@ export default function UniversitiesSection() {
 
             {/* More universities teaser */}
             {moreCount > 0 && (
-              <div className="p-4 rounded-2xl border border-dashed border-white/10 bg-white/2 flex flex-col items-center justify-center text-center gap-2">
+              <div className="p-4 rounded-2xl border border-dashed border-border bg-card/50 flex flex-col items-center justify-center text-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 font-bold text-sm">
                   +{moreCount}
                 </div>

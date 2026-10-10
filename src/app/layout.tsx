@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
@@ -7,11 +7,13 @@ import FeedbackWidget from "@/components/feedback/feedback-widget";
 import ChatWidget from "@/components/ai/chat-widget";
 import SplashScreen from "@/components/ui/splash-screen";
 import VisitTracker from "@/components/analytics/visit-tracker";
+import SyncManager from "@/components/sync/sync-manager";
 import InstallPrompt from "@/components/pwa/install-prompt";
 import { AuthProvider } from "@/lib/auth";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const display = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-display", weight: ["600", "700", "800"] });
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -86,6 +88,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <AuthProvider>
         <SplashScreen />
         <VisitTracker />
+        <SyncManager />
         {children}
         <MobileBottomNav />
         <InstallPrompt />
@@ -130,7 +133,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${display.variable} font-sans antialiased`}>
         {googleClientId ? (
           <GoogleOAuthProvider clientId={googleClientId}>{tree}</GoogleOAuthProvider>
         ) : (

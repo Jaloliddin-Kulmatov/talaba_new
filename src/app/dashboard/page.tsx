@@ -7,11 +7,13 @@ import {
   Sparkles, ArrowRight, Users,
   GraduationCap, Globe, Pencil, X, Loader2, ExternalLink,
   Plus, LogOut, CheckCircle2, Calendar,
+  Briefcase, MessageSquare, LayoutGrid,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
+import TodayOverview from "@/components/dashboard/today-overview";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 function getToken() {
@@ -38,11 +40,12 @@ interface MyClub {
 const CLUB_CATEGORIES = ["academic", "sports", "culture", "social", "language", "tech", "arts", "volunteer"];
 
 const quickLinks = [
-  { href: "/support",      icon: "🗺️", label: "Yordam" },
-  { href: "/community",    icon: "👥", label: "Hamjamiyat" },
-  { href: "/jobs",         icon: "💼", label: "Ishlar" },
-  { href: "/universities", icon: "🎓", label: "Universitetlar" },
-  { href: "/dashboard/ai", icon: "✨", label: "AI Chat" },
+  { href: "/tools",        icon: LayoutGrid,    label: "Asboblar",        tint: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
+  { href: "/jobs",         icon: Briefcase,     label: "Ish va amaliyot", tint: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
+  { href: "/chat",         icon: MessageSquare, label: "Chat",            tint: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400" },
+  { href: "/community",    icon: Users,         label: "Klublar",         tint: "bg-violet-500/10 text-violet-600 dark:text-violet-400" },
+  { href: "/universities", icon: GraduationCap, label: "Universitetlar",  tint: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+  { href: "/support",      icon: Globe,         label: "Talaba hayoti",   tint: "bg-rose-500/10 text-rose-600 dark:text-rose-400" },
 ];
 
 export default function DashboardPage() {
@@ -127,7 +130,7 @@ export default function DashboardPage() {
   ];
   const myJoinedClubs      = joinedClubs.filter(c => c.club_type === "club");
 
-  const mInputCls = "w-full bg-white/8 border border-white/15 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-blue-500/60 transition-colors";
+  const mInputCls = "w-full bg-background border border-input rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500/60 transition-colors";
 
   return (
     <DashboardLayout>
@@ -141,6 +144,8 @@ export default function DashboardPage() {
           <Link href="/dashboard/ai"><Sparkles size={14} className="text-violet-400" /> AI-dan so&apos;rash</Link>
         </Button>
       </div>
+
+      <TodayOverview />
 
       {/* ── My Clubs & Communities + TALABA AI (side by side on desktop) ── */}
       <div className="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -257,15 +262,17 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Quick actions ── */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
-        {quickLinks.map((item) => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+        {quickLinks.map(({ href, icon: Icon, label, tint }) => (
           <Link
-            key={item.href}
-            href={item.href}
-            className="flex flex-col items-center gap-1.5 p-4 rounded-2xl border border-border bg-card hover:border-blue-500/30 hover:shadow-sm transition-all text-center"
+            key={href}
+            href={href}
+            className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-border bg-card shadow-sm hover:-translate-y-0.5 hover:border-blue-500/30 hover:shadow-card transition-all text-center"
           >
-            <span className="text-2xl">{item.icon}</span>
-            <span className="text-[11px] font-medium text-foreground">{item.label}</span>
+            <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${tint}`}>
+              <Icon size={19} />
+            </span>
+            <span className="text-xs font-medium text-foreground">{label}</span>
           </Link>
         ))}
       </div>
@@ -273,57 +280,57 @@ export default function DashboardPage() {
       {/* ══════════ EDIT CLUB MODAL ══════════ */}
       {editingClub && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 bg-black/70 backdrop-blur-sm" onClick={() => setEditingClub(null)}>
-          <div className="w-full max-w-lg bg-[#0e0e1a] border border-white/12 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
-              <h2 className="text-sm font-bold text-white flex items-center gap-2">
+          <div className="w-full max-w-lg bg-card text-card-foreground border border-border rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
                 <Pencil size={14} className="text-blue-400" />
                 {editingClub.club_type === "community" ? "Hamjamiyatni tahrirlash" : "Klubni tahrirlash"}
               </h2>
-              <button onClick={() => setEditingClub(null)} className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/8"><X size={15} /></button>
+              <button onClick={() => setEditingClub(null)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent"><X size={15} /></button>
             </div>
             <div className="p-5 space-y-3">
               <div>
-                <label className="text-[11px] font-medium text-white/50 mb-1 block">Nomi *</label>
+                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Nomi *</label>
                 <input value={editForm.name} onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))} className={mInputCls} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium text-white/50 mb-1 block">Kategoriya</label>
+                  <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Kategoriya</label>
                   <select value={editForm.category} onChange={e => setEditForm(p => ({ ...p, category: e.target.value }))} className={mInputCls}>
-                    {CLUB_CATEGORIES.map(c => <option key={c} value={c} className="bg-[#1a1a2e] text-white">{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+                    {CLUB_CATEGORIES.map(c => <option key={c} value={c} className="bg-background text-foreground">{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
                   </select>
                 </div>
                 {editingClub.club_type === "community" && (
                   <div>
-                    <label className="text-[11px] font-medium text-white/50 mb-1 block">Viloyat</label>
+                    <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Viloyat</label>
                     <input value={editForm.region} onChange={e => setEditForm(p => ({ ...p, region: e.target.value }))} placeholder="masalan, Samarqand viloyati" className={mInputCls} />
                   </div>
                 )}
               </div>
               <div>
-                <label className="text-[11px] font-medium text-white/50 mb-1 block">Tavsif</label>
+                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Tavsif</label>
                 <textarea rows={3} value={editForm.description} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} className={mInputCls} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] font-medium text-white/50 mb-1 block">Uchrashuv vaqti</label>
+                  <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Uchrashuv vaqti</label>
                   <input value={editForm.meeting_time} onChange={e => setEditForm(p => ({ ...p, meeting_time: e.target.value }))} placeholder="masalan, Har chorshanba, 18:00" className={mInputCls} />
                 </div>
                 <div>
-                  <label className="text-[11px] font-medium text-white/50 mb-1 block">Manzil</label>
+                  <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Manzil</label>
                   <input value={editForm.location} onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))} placeholder="masalan, 304-xona" className={mInputCls} />
                 </div>
               </div>
               <div>
-                <label className="text-[11px] font-medium text-white/50 mb-1 block">Rasmiy veb-sayt</label>
+                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Rasmiy veb-sayt</label>
                 <input value={editForm.website} onChange={e => setEditForm(p => ({ ...p, website: e.target.value }))} placeholder="https://..." className={mInputCls} />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-white/50 mb-1 block">Telegram havolasi</label>
+                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Telegram havolasi</label>
                 <input value={editForm.telegram_link} onChange={e => setEditForm(p => ({ ...p, telegram_link: e.target.value }))} placeholder="https://t.me/..." className={mInputCls} />
               </div>
               <div>
-                <label className="text-[11px] font-medium text-white/50 mb-1 block">Aloqa</label>
+                <label className="text-[11px] font-medium text-muted-foreground mb-1 block">Aloqa</label>
                 <input value={editForm.contact} onChange={e => setEditForm(p => ({ ...p, contact: e.target.value }))} placeholder="email | telefon" className={mInputCls} />
               </div>
 
@@ -332,7 +339,7 @@ export default function DashboardPage() {
               )}
 
               <div className="flex gap-2 pt-1">
-                <button onClick={() => setEditingClub(null)} className="flex-1 py-2.5 rounded-xl border border-white/10 text-xs font-semibold text-white/60 hover:bg-white/5 transition-colors">Bekor qilish</button>
+                <button onClick={() => setEditingClub(null)} className="flex-1 py-2.5 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:bg-accent transition-colors">Bekor qilish</button>
                 <button onClick={handleSave} disabled={editBusy} className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
                   {editBusy ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />} O&apos;zgarishlarni saqlash
                 </button>
@@ -379,7 +386,7 @@ function ClubCard({ club, isOwner, onEdit, onLeave }: {
         {/* Actions */}
         <div className="flex items-center gap-1 shrink-0">
           {isOwner && onEdit && (
-            <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(); }} className={`p-1.5 rounded-lg ${accentColor} hover:bg-white/8 transition-all`} title="Tahrirlash">
+            <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(); }} className={`p-1.5 rounded-lg ${accentColor} hover:bg-accent transition-all`} title="Tahrirlash">
               <Pencil size={12} />
             </button>
           )}
@@ -391,7 +398,7 @@ function ClubCard({ club, isOwner, onEdit, onLeave }: {
           {club.website && (
             <a href={club.website} target="_blank" rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-blue-400 hover:bg-white/8 transition-all" title="Veb-sayt">
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-blue-400 hover:bg-accent transition-all" title="Veb-sayt">
               <ExternalLink size={12} />
             </a>
           )}

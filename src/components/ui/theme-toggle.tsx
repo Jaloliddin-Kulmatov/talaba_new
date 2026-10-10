@@ -13,7 +13,7 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   if (!mounted) {
     return (
-      <div className={cn("h-8 w-8 rounded-lg bg-white/5 border border-white/10", className)} />
+      <div className={cn("h-8 w-8 rounded-lg bg-muted border border-border", className)} />
     );
   }
 
@@ -22,13 +22,13 @@ export function ThemeToggle({ className }: { className?: string }) {
   return (
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      aria-label="Toggle theme"
+      aria-label={isDark ? "Yorug' rejimga o'tish" : "Qorong'i rejimga o'tish"}
       className={cn(
         "relative h-8 w-8 rounded-lg border flex items-center justify-center transition-all duration-200",
         "hover:scale-105 active:scale-95",
         isDark
           ? "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-amber-400"
-          : "bg-slate-100 border-slate-200 hover:bg-slate-200 text-indigo-600",
+          : "bg-slate-100 border-slate-200 hover:bg-slate-200 text-blue-600",
         className
       )}
     >

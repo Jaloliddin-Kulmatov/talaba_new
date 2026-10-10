@@ -54,7 +54,7 @@ function StatCard({ stat, animate }: { stat: typeof stats[0]; animate: boolean }
   const Icon = stat.icon;
 
   return (
-    <div className="relative p-8 rounded-2xl border border-white/8 bg-white/3 text-center group hover:border-white/15 hover:bg-white/5 transition-all duration-300">
+    <div className="relative p-8 rounded-2xl border border-border bg-card shadow-sm text-center group hover:border-blue-500/30 transition-all duration-300">
       <div className={`inline-flex h-12 w-12 items-center justify-center rounded-xl ${stat.bg} mb-4`}>
         <Icon size={22} className={stat.color} />
       </div>

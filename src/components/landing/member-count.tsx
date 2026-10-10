@@ -40,11 +40,12 @@ export default function MemberCount() {
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [target]);
 
-  // Hide until we have data (avoids flashing a 0).
-  if (target === null) return null;
+  // Hide until we have a real number — never show "0 students" (also what a failed
+  // request or a sleeping backend would otherwise produce).
+  if (!target) return null;
 
   return (
-    <div className="mt-8 flex justify-center animate-fade-in" style={{ animationDelay: "0.35s" }}>
+    <div className="mt-8 flex justify-center lg:justify-start animate-fade-in" style={{ animationDelay: "0.35s" }}>
       <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-emerald-500/25 bg-emerald-500/8 backdrop-blur-sm">
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />

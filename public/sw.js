@@ -1,40 +1,62 @@
-// ICOM Service Worker — cache shell for offline support + PWA install
-const CACHE = "icom-v1";
-const SHELL = ["/", "/offline", "/manifest.json", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png", "/logo.svg", "/favicon.svg"];
+// TALABA service worker — installable PWA + offline access to pages the student has already opened
+// (the timetable matters most: it must open on a bad connection).
+//
+// Strategy
+//  - Pages (navigations):      network-first, fall back to the cached copy, then /offline.html
+//  - /_next/static/* (hashed): cache-first — file names change with content, so they never go stale
+//  - Other same-origin GETs:   stale-while-revalidate
+//  - API calls / cross-origin: never touched
+const VERSION = "talaba-v2";
+const PRECACHE = ["/offline.html", "/manifest.json", "/logo.svg", "/favicon.svg", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"];
+
+// Dev server chunks are not content-hashed, so caching them would serve stale code.
+const IS_DEV = ["localhost", "127.0.0.1", "[::1]"].includes(self.location.hostname);
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim()),
   );
 });
 
+const put = (req, res) => {
+  if (!res || !res.ok || res.type === "opaque") return;
+  const copy = res.clone();
+  caches.open(VERSION).then((c) => c.put(req, copy)).catch(() => {});
+};
+
 self.addEventListener("fetch", (e) => {
-  // Only handle GET requests for same-origin or static assets
-  if (e.request.method !== "GET") return;
-  const url = new URL(e.request.url);
-  // Let API calls go through the network always
+  const req = e.request;
+  if (IS_DEV || req.method !== "GET") return;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api")) return;
 
+  if (req.mode === "navigate") {
+    e.respondWith(
+      fetch(req)
+        .then((res) => { put(req, res); return res; })
+        .catch(() => caches.match(req).then((hit) => hit || caches.match("/offline.html"))),
+    );
+    return;
+  }
+
+  if (url.pathname.startsWith("/_next/static/")) {
+    e.respondWith(
+      caches.match(req).then((hit) => hit || fetch(req).then((res) => { put(req, res); return res; })),
+    );
+    return;
+  }
+
   e.respondWith(
-    caches.match(e.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(e.request).then((res) => {
-        // Cache successful same-origin page responses
-        if (res.ok && url.origin === self.location.origin) {
-          const clone = res.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, clone));
-        }
-        return res;
-      }).catch(() => {
-        // Offline fallback for navigation requests
-        if (e.request.mode === "navigate") return caches.match("/");
-      });
-    })
+    caches.match(req).then((hit) => {
+      const net = fetch(req).then((res) => { put(req, res); return res; }).catch(() => hit);
+      return hit || net;
+    }),
   );
 });

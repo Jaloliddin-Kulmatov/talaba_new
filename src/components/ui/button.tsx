@@ -11,17 +11,17 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-glow hover:from-indigo-400 hover:to-violet-400 hover:shadow-glow-lg",
+          "bg-gradient-to-b from-blue-500 to-blue-600 text-white shadow-[0_1px_2px_rgba(37,99,235,0.35),0_6px_16px_-6px_rgba(37,99,235,0.55)] hover:from-blue-500 hover:to-blue-700 hover:shadow-[0_1px_2px_rgba(37,99,235,0.4),0_10px_24px_-8px_rgba(37,99,235,0.65)]",
         destructive:
-          "bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30",
+          "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/25 hover:bg-red-500/15",
         outline:
-          "border border-white/10 bg-white/5 backdrop-blur-sm text-foreground hover:bg-white/10 hover:border-white/20",
+          "border border-border bg-card text-foreground shadow-sm hover:bg-accent hover:border-blue-500/30",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "text-muted-foreground hover:text-foreground hover:bg-white/5",
+        ghost: "text-muted-foreground hover:text-foreground hover:bg-accent",
         link: "text-primary underline-offset-4 hover:underline p-0 h-auto",
         glass:
-          "glass text-foreground hover:bg-white/10 hover:border-white/20",
+          "glass text-foreground hover:bg-accent",
         cyan:
           "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400 shadow-[0_0_20px_rgba(6,182,212,0.3)]",
       },

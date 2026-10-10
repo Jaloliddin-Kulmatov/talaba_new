@@ -22,12 +22,12 @@ export default function FeedbackPage() {
   const submit = async () => {
     setError("");
     if (!message.trim()) {
-      setError("Please write your feedback before submitting.");
+      setError("Yuborishdan oldin fikringizni yozing.");
       return;
     }
     setSending(true);
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("icon_token") : null;
+      const token = typeof window !== "undefined" ? localStorage.getItem("talaba_token") : null;
       const res = await fetch(`${API_BASE}/feedback`, {
         method: "POST",
         headers: {
@@ -43,14 +43,14 @@ export default function FeedbackPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not send feedback.");
+      if (!res.ok) throw new Error(data.error || "Fikrni yuborib bo'lmadi.");
       setSuccess(true);
       setMessage("");
       setRating(0);
       setName("");
       setEmail("");
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Something went wrong.");
+      setError(e instanceof Error ? e.message : "Nimadir noto'g'ri ketdi.");
     } finally {
       setSending(false);
     }
@@ -67,20 +67,20 @@ export default function FeedbackPage() {
               <MessageSquarePlus size={26} className="text-white" />
             </div>
             <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-3">
-              We&apos;d love your feedback
+              Fikringiz biz uchun muhim
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
-              ICOM is built for international students like you. Tell us what works,
-              what&apos;s broken, or what you wish existed.
+              TALABA — O&apos;zbek talabalari uchun. Nima yaxshi ishlayotganini, nima ishlamayotganini
+              yoki yana qanday imkoniyat kerakligini ayting.
             </p>
           </div>
 
           {/* Quick tag suggestions */}
           <div className="grid grid-cols-3 gap-3 mb-8">
             {[
-              { icon: Heart, label: "What you love", color: "from-pink-500 to-rose-600" },
-              { icon: Bug, label: "Bug report", color: "from-orange-500 to-red-600" },
-              { icon: Sparkles, label: "Feature idea", color: "from-indigo-500 to-violet-600" },
+              { icon: Heart, label: "Yoqqan jihatlar", color: "from-pink-500 to-rose-600" },
+              { icon: Bug, label: "Xatolik haqida", color: "from-orange-500 to-red-600" },
+              { icon: Sparkles, label: "Yangi g'oya", color: "from-blue-500 to-cyan-600" },
             ].map((s) => (
               <button
                 key={s.label}
@@ -101,23 +101,22 @@ export default function FeedbackPage() {
               <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center mx-auto mb-5">
                 <CheckCircle2 size={32} className="text-emerald-500" />
               </div>
-              <h2 className="text-xl font-bold text-foreground mb-2">Thank you! 🎉</h2>
+              <h2 className="text-xl font-bold text-foreground mb-2">Rahmat! 🎉</h2>
               <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
-                Your feedback has been received. We read every single submission and use them
-                to make ICOM better for everyone.
+                Fikringiz qabul qilindi. Har bir xabarni o&apos;qiymiz va TALABA ni hamma uchun yaxshiroq qilish uchun ishlatamiz.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
                   onClick={() => setSuccess(false)}
                   className="px-5 py-2.5 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-accent transition-colors"
                 >
-                  Send another
+                  Yana yuborish
                 </button>
                 <Link
                   href="/dashboard"
                   className="px-5 py-2.5 rounded-xl bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-colors"
                 >
-                  Back to dashboard
+                  Boshqaruv paneliga qaytish
                 </Link>
               </div>
             </div>
@@ -126,8 +125,8 @@ export default function FeedbackPage() {
               {/* Star rating */}
               <div>
                 <label className="text-sm font-semibold text-foreground mb-3 block">
-                  How is your experience so far?
-                  <span className="text-muted-foreground font-normal ml-1">(optional)</span>
+                  Hozircha taassurotingiz qanday?
+                  <span className="text-muted-foreground font-normal ml-1">(ixtiyoriy)</span>
                 </label>
                 <div className="flex items-center gap-2">
                   {[1, 2, 3, 4, 5].map((n) => {
@@ -140,7 +139,7 @@ export default function FeedbackPage() {
                         onMouseLeave={() => setHoverRating(0)}
                         onClick={() => setRating(n === rating ? 0 : n)}
                         className="p-1 transition-transform hover:scale-110 active:scale-95"
-                        aria-label={`${n} star${n > 1 ? "s" : ""}`}
+                        aria-label={`${n} yulduz`}
                       >
                         <Star
                           size={32}
@@ -151,7 +150,7 @@ export default function FeedbackPage() {
                   })}
                   {rating > 0 && (
                     <span className="ml-3 text-sm font-medium text-muted-foreground">
-                      {["", "😞 Bad", "😐 Meh", "🙂 OK", "😊 Good", "🤩 Great"][rating]}
+                      {["", "😞 Yomon", "😐 O'rtacha", "🙂 Bo'ladi", "😊 Yaxshi", "🤩 Ajoyib"][rating]}
                     </span>
                   )}
                 </div>
@@ -160,12 +159,12 @@ export default function FeedbackPage() {
               {/* Comment */}
               <div>
                 <label className="text-sm font-semibold text-foreground mb-2 block">
-                  Your feedback <span className="text-red-400">*</span>
+                  Fikringiz <span className="text-red-400">*</span>
                 </label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Tell us what you think — bugs, feature ideas, things you love, things that frustrated you. Anything goes!"
+                  placeholder="Nima deb o'ylaysiz? Xatoliklar, yangi g'oyalar, yoqqan yoki xafa qilgan narsalar — hammasi mumkin!"
                   rows={6}
                   maxLength={2000}
                   className="w-full bg-muted border border-border rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 transition-all resize-none"
@@ -179,16 +178,16 @@ export default function FeedbackPage() {
               {!user && (
                 <div className="space-y-3">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Optional — if you&apos;d like a reply
+                    Ixtiyoriy — javob olishni xohlasangiz
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-medium text-foreground mb-1.5 block">Name</label>
+                      <label className="text-xs font-medium text-foreground mb-1.5 block">Ism</label>
                       <input
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Your name"
+                        placeholder="Ismingiz"
                         className="w-full bg-muted border border-border rounded-xl px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/50 transition-all"
                       />
                     </div>
@@ -208,8 +207,8 @@ export default function FeedbackPage() {
 
               {/* Logged-in user note */}
               {user && (
-                <div className="px-4 py-3 rounded-xl bg-indigo-500/5 border border-indigo-500/15 text-xs text-muted-foreground">
-                  Submitting as <span className="text-foreground font-semibold">{user.name}</span>
+                <div className="px-4 py-3 rounded-xl bg-blue-500/5 border border-blue-500/15 text-xs text-muted-foreground">
+                  Yuboruvchi: <span className="text-foreground font-semibold">{user.name}</span>
                   {user.email && <> · {user.email}</>}
                 </div>
               )}
@@ -230,18 +229,18 @@ export default function FeedbackPage() {
                 {sending ? (
                   <>
                     <Loader2 size={16} className="animate-spin" />
-                    Sending…
+                    Yuborilmoqda…
                   </>
                 ) : (
                   <>
                     <Send size={15} />
-                    Send feedback
+                    Fikrni yuborish
                   </>
                 )}
               </button>
 
               <p className="text-[11px] text-muted-foreground text-center">
-                We&apos;ll never share your feedback publicly without permission.
+                Fikringizni ruxsatsiz hech qachon ommaga e&apos;lon qilmaymiz.
               </p>
             </div>
           )}

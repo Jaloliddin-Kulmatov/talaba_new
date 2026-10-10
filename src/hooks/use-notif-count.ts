@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
 function getToken() {
-  return typeof window !== "undefined" ? localStorage.getItem("icon_token") : null;
+  return typeof window !== "undefined" ? localStorage.getItem("talaba_token") : null;
 }
 
 /**

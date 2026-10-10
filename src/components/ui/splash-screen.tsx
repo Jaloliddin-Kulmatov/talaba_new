@@ -2,14 +2,31 @@
 
 import { useEffect, useState } from "react";
 
+const SEEN_KEY = "talaba_splash_seen";
+
+/**
+ * App-launch splash. Shown only when TALABA is opened as an installed app
+ * (home-screen / standalone) and only once per session — in a normal browser
+ * tab it would just delay the content the visitor came for.
+ */
 export default function SplashScreen() {
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(false);
   const [fading, setFading] = useState(false);
 
   useEffect(() => {
-    // Start fade at 1500ms, remove from DOM at 1900ms (400ms fade)
-    const t1 = setTimeout(() => setFading(true), 1500);
-    const t2 = setTimeout(() => setVisible(false), 1900);
+    let standalone = false;
+    try {
+      standalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (navigator as Navigator & { standalone?: boolean }).standalone === true;
+      if (!standalone || sessionStorage.getItem(SEEN_KEY)) return;
+      sessionStorage.setItem(SEEN_KEY, "1");
+    } catch {
+      return;
+    }
+    setVisible(true);
+    const t1 = setTimeout(() => setFading(true), 700);
+    const t2 = setTimeout(() => setVisible(false), 1100);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
@@ -17,38 +34,21 @@ export default function SplashScreen() {
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#050508] transition-opacity duration-400 ${
+      aria-hidden
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background transition-opacity duration-300 ${
         fading ? "opacity-0" : "opacity-100"
       }`}
     >
-      {/* Ambient glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-blue-600/20 blur-3xl pointer-events-none" />
-
-      <div className="flex flex-col items-center gap-6 animate-fade-in relative">
-        {/* Pulsing ring behind logo */}
-        <div className="relative flex items-center justify-center">
-          <div className="absolute w-28 h-28 rounded-full bg-blue-500/10 animate-ping" style={{ animationDuration: "1.5s" }} />
-          <img src="/logo.svg" alt="TALABA" className="w-20 h-20 drop-shadow-2xl relative z-10" />
-        </div>
-
-        <div className="text-center space-y-1.5">
-          <p className="text-3xl font-bold tracking-tight text-white">
-            TALABA<span className="text-blue-400">.</span>
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-blue-500/20 to-emerald-500/20 blur-3xl" />
+      <div className="relative flex flex-col items-center gap-5 animate-fade-in">
+        <img src="/logo.svg" alt="" className="h-20 w-20 drop-shadow-xl" />
+        <div className="text-center">
+          <p className="font-display text-3xl font-extrabold tracking-tight text-foreground">
+            TALABA<span className="text-blue-500">.</span>
           </p>
-          <p className="text-sm text-white/40 tracking-widest uppercase">
-            O&apos;zbek talabalari platformasi
+          <p className="mt-1 text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+            O&apos;zbek talabalari uchun
           </p>
-        </div>
-
-        {/* Loading dots */}
-        <div className="flex items-center gap-1.5 mt-2">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="w-1.5 h-1.5 rounded-full bg-blue-400/60 animate-bounce"
-              style={{ animationDelay: `${i * 150}ms`, animationDuration: "0.8s" }}
-            />
-          ))}
         </div>
       </div>
     </div>

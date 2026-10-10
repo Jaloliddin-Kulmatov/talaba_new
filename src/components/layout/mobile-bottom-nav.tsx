@@ -6,18 +6,18 @@ import {
   LayoutDashboard,
   Users,
   Briefcase,
-  MessageSquare,
-  UserCircle2,
+  CalendarDays,
+  LayoutGrid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 
 const tabs = [
-  { href: "/dashboard",              icon: LayoutDashboard, label: "Bosh sahifa" },
-  { href: "/community",              icon: Users,           label: "Klublar"     },
-  { href: "/chat",                   icon: MessageSquare,   label: "Chat"        },
-  { href: "/jobs",                   icon: Briefcase,       label: "Ishlar"      },
-  { href: "/dashboard/profile",      icon: UserCircle2,     label: "Profil"      },
+  { href: "/dashboard",        icon: LayoutDashboard, label: "Bosh sahifa" },
+  { href: "/tools/timetable",  icon: CalendarDays,    label: "Jadval"      },
+  { href: "/community",        icon: Users,           label: "Klublar"     },
+  { href: "/jobs",             icon: Briefcase,       label: "Ishlar"      },
+  { href: "/tools",            icon: LayoutGrid,      label: "Asboblar"    },
 ];
 
 export default function MobileBottomNav() {
@@ -26,6 +26,8 @@ export default function MobileBottomNav() {
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
+    // "Asboblar" is the hub plus every tool except the timetable, which has its own tab
+    if (href === "/tools") return pathname === "/tools" || (pathname.startsWith("/tools/") && !pathname.startsWith("/tools/timetable"));
     return pathname.startsWith(href);
   };
 
@@ -42,6 +44,7 @@ export default function MobileBottomNav() {
               <Link
                 key={href}
                 href={href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex-1 flex flex-col items-center justify-center gap-1 py-2.5 relative transition-colors",
                   active

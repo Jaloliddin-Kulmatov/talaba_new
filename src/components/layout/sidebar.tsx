@@ -22,14 +22,18 @@ import {
   TrendingUp,
   LogOut,
   ShieldCheck,
+  LayoutGrid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
 import { useNotifCount } from "@/hooks/use-notif-count";
+import { TOOLS } from "@/lib/toolkit/tools";
+import { COMMUNITY_SERVICES } from "@/lib/community";
 
-const sidebarSections = [
+type SidebarLink = { href: string; icon: React.ElementType; label: string; badge?: string };
+const sidebarSections: { label: string; links: SidebarLink[] }[] = [
   {
     label: "Asosiy",
     links: [
@@ -38,6 +42,14 @@ const sidebarSections = [
       { href: "/jobs", icon: Briefcase, label: "Ish va amaliyot" },
       { href: "/universities", icon: GraduationCap, label: "Universitetlar" },
     ],
+  },
+  {
+    label: "Talaba asboblari",
+    links: [{ href: "/tools", icon: LayoutGrid, label: "Barcha asboblar" }, ...TOOLS.map((t) => ({ href: t.href, icon: t.icon, label: t.title }))],
+  },
+  {
+    label: "Hamjamiyat xizmatlari",
+    links: COMMUNITY_SERVICES.map((c) => ({ href: c.href, icon: c.icon, label: c.title })),
   },
   {
     label: "Vositalar",
@@ -74,7 +86,7 @@ export default function Sidebar() {
   const notifCount = useNotifCount(user?.id);
 
   const isActive = (href: string) => {
-    if (href === "/dashboard") return pathname === "/dashboard";
+    if (href === "/dashboard" || href === "/tools") return pathname === href;
     return pathname.startsWith(href);
   };
 

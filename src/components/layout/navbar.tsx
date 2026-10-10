@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Bell, Menu, X, Search, Sparkles,
   Users, Briefcase, Globe, MessageSquare,
-  LayoutDashboard, LogIn, Home, LogOut, ShieldCheck,
+  LayoutDashboard, LogIn, Home, LogOut, ShieldCheck, LayoutGrid,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -21,6 +21,7 @@ import { useNotifCount } from "@/hooks/use-notif-count";
 // URL) but it's no longer a top-level destination. Desktop and mobile now share
 // the same link set.
 const desktopNavLinks = [
+  { href: "/tools", label: "Asboblar", icon: LayoutGrid },
   { href: "/chat", label: "Chat", icon: MessageSquare },
   { href: "/community", label: "Klublar", icon: Users },
   { href: "/jobs", label: "Ishlar", icon: Briefcase },
@@ -101,13 +102,13 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
                 key={href}
                 href={href}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                  "flex items-center gap-1.5 px-2.5 xl:px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
                   active(href)
                     ? "text-blue-600 bg-blue-500/10 dark:text-blue-400 dark:bg-blue-500/10"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
               >
-                <Icon size={14} />
+                <Icon size={14} className="hidden xl:block" />
                 {label}
               </Link>
             ))}
@@ -129,6 +130,7 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
 
             <button
               onClick={() => setSearchOpen(true)}
+              aria-label="Qidirish"
               className="lg:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             >
               <Search size={16} />
@@ -154,7 +156,8 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
                 </Button>
 
                 <Link
-                  href="/dashboard"
+                  href="/dashboard/profile"
+                  aria-label="Profilim"
                   className="flex items-center gap-2 ml-1 px-2 py-1 rounded-xl hover:bg-accent transition-colors"
                 >
                   <Avatar size="sm" online>
@@ -188,6 +191,8 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
               variant="ghost"
               size="icon-sm"
               className="md:hidden"
+              aria-label={mobileOpen ? "Menyuni yopish" : "Menyuni ochish"}
+              aria-expanded={mobileOpen}
               onClick={() => setMobileOpen(!mobileOpen)}
             >
               {mobileOpen ? <X size={18} /> : <Menu size={18} />}
