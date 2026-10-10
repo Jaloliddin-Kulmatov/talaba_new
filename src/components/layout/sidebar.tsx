@@ -189,13 +189,24 @@ export default function Sidebar() {
               title={collapsed ? "Admin panel" : undefined}
               className={cn(
                 "flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 group relative",
-                isActive("/admin")
+                pathname === "/admin"
                   ? "bg-amber-500/15 text-amber-400"
                   : "text-muted-foreground hover:text-amber-400 hover:bg-amber-500/5"
               )}
             >
               <ShieldCheck size={17} className="shrink-0" />
               {!collapsed && <span className="flex-1">Admin panel</span>}
+            </Link>
+            <Link
+              href="/admin/moderation"
+              title={collapsed ? "Moderatsiya" : undefined}
+              className={cn(
+                "mt-0.5 flex items-center gap-3 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                isActive("/admin/moderation") ? "bg-amber-500/15 text-amber-400" : "text-muted-foreground hover:text-amber-400 hover:bg-amber-500/5"
+              )}
+            >
+              <ShieldCheck size={17} className="shrink-0" />
+              {!collapsed && <span className="flex-1">Moderatsiya</span>}
             </Link>
           </div>
         )}

@@ -71,6 +71,7 @@ def create_app():
     from routes.market import market_bp
     from routes.lostfound import lostfound_bp
     from routes.sync import sync_bp
+    from routes.moderation import moderation_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(ai_bp, url_prefix="/api/ai")
@@ -86,6 +87,7 @@ def create_app():
     app.register_blueprint(market_bp, url_prefix="/api/market")
     app.register_blueprint(lostfound_bp, url_prefix="/api/lostfound")
     app.register_blueprint(sync_bp, url_prefix="/api/sync")
+    app.register_blueprint(moderation_bp, url_prefix="/api/moderation")
 
     @app.route("/")
     def index():
