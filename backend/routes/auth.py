@@ -9,6 +9,7 @@ from app import db, bcrypt
 from models import (
     User, Club, ClubMembership, ClubMessage,
     Post, PostComment, AmbassadorApplication, Feedback, AISession, Job,
+    CourseReview, MarketItem, LostFoundItem, ContentReport, UserSync,
 )
 
 auth_bp = Blueprint("auth", __name__)
@@ -353,6 +354,13 @@ def delete_me():
 
         # 8) AI sessions.
         AISession.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+
+        # 8b) Community services: the user's reviews, listings, reports and cloud-synced data.
+        CourseReview.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+        MarketItem.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+        LostFoundItem.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+        ContentReport.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+        UserSync.query.filter_by(user_id=user_id).delete(synchronize_session=False)
 
         # 9) Finally, the user.
         db.session.delete(user)

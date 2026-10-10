@@ -67,6 +67,10 @@ def create_app():
     from routes.feedback import feedback_bp
     from routes.chat import chat_bp
     from routes.track import track_bp
+    from routes.reviews import reviews_bp
+    from routes.market import market_bp
+    from routes.lostfound import lostfound_bp
+    from routes.sync import sync_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(ai_bp, url_prefix="/api/ai")
@@ -78,6 +82,10 @@ def create_app():
     app.register_blueprint(feedback_bp, url_prefix="/api/feedback")
     app.register_blueprint(chat_bp, url_prefix="/api/chat")
     app.register_blueprint(track_bp, url_prefix="/api/track")
+    app.register_blueprint(reviews_bp, url_prefix="/api/reviews")
+    app.register_blueprint(market_bp, url_prefix="/api/market")
+    app.register_blueprint(lostfound_bp, url_prefix="/api/lostfound")
+    app.register_blueprint(sync_bp, url_prefix="/api/sync")
 
     @app.route("/")
     def index():

@@ -430,3 +430,153 @@ class PageVisit(db.Model):
 
     def to_dict(self):
         return {"date": self.date.isoformat(), "count": self.count}
+
+
+# ── Community services: course reviews, marketplace, lost & found, sync ──────
+
+def _iso(dt):
+    return dt.isoformat() + "Z" if dt else None
+
+
+class CourseReview(db.Model):
+    """One student's anonymous review of one course (subject + teacher + university).
+
+    The author is stored for accountability/moderation but is NEVER exposed in
+    to_dict(); the API only tells a viewer whether a review is theirs.
+    """
+    __tablename__ = "course_reviews"
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "subject_key", "teacher_key", "university",
+                            name="uq_review_user_course"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    subject = db.Column(db.String(120), nullable=False)
+    subject_key = db.Column(db.String(120), nullable=False, index=True)   # lower-cased, whitespace-collapsed
+    teacher = db.Column(db.String(120))
+    teacher_key = db.Column(db.String(120), nullable=False, default="", index=True)
+    university = db.Column(db.String(120), nullable=False, index=True)
+    rating = db.Column(db.Integer, nullable=False)          # 1–5 overall
+    difficulty = db.Column(db.Integer)                      # 1–5, optional
+    recommend = db.Column(db.Boolean)                       # optional
+    text = db.Column(db.Text)
+    report_count = db.Column(db.Integer, default=0, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self, viewer_id=None):
+        return {
+            "id": self.id,
+            "subject": self.subject,
+            "teacher": self.teacher or "",
+            "university": self.university,
+            "rating": self.rating,
+            "difficulty": self.difficulty,
+            "recommend": self.recommend,
+            "text": self.text or "",
+            "created_at": _iso(self.created_at),
+            "is_mine": bool(viewer_id and viewer_id == self.user_id),
+        }
+
+
+class MarketItem(db.Model):
+    __tablename__ = "market_items"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    title = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text)
+    category = db.Column(db.String(30), nullable=False, index=True)
+    condition = db.Column(db.String(20))                    # yangi | yaxshi | ishlatilgan
+    price = db.Column(db.Integer)                           # so'm; NULL = kelishiladi, 0 = tekin
+    university = db.Column(db.String(120), index=True)
+    region = db.Column(db.String(100), index=True)
+    contact = db.Column(db.String(120), nullable=False)     # shown to signed-in users only
+    status = db.Column(db.String(12), default="active", nullable=False, index=True)  # active | sold | hidden
+    report_count = db.Column(db.Integer, default=0, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    seller = db.relationship("User", foreign_keys=[user_id])
+
+    def to_dict(self, viewer_id=None):
+        mine = bool(viewer_id and viewer_id == self.user_id)
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description or "",
+            "category": self.category,
+            "condition": self.condition or "",
+            "price": self.price,
+            "university": self.university or "",
+            "region": self.region or "",
+            "status": self.status,
+            "seller_name": (self.seller.name.split(" ")[0] if self.seller and self.seller.name else "Talaba"),
+            # contact details are only revealed to signed-in users
+            "contact": self.contact if viewer_id else None,
+            "created_at": _iso(self.created_at),
+            "is_mine": mine,
+        }
+
+
+class LostFoundItem(db.Model):
+    __tablename__ = "lost_found_items"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    kind = db.Column(db.String(8), nullable=False, index=True)           # lost | found
+    title = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text)
+    place = db.Column(db.String(160), nullable=False)
+    happened_on = db.Column(db.Date, nullable=False)
+    university = db.Column(db.String(120), index=True)
+    contact = db.Column(db.String(120), nullable=False)
+    status = db.Column(db.String(12), default="open", nullable=False, index=True)  # open | resolved | hidden
+    report_count = db.Column(db.Integer, default=0, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self, viewer_id=None):
+        return {
+            "id": self.id,
+            "kind": self.kind,
+            "title": self.title,
+            "description": self.description or "",
+            "place": self.place,
+            "happened_on": self.happened_on.isoformat(),
+            "university": self.university or "",
+            "status": self.status,
+            "contact": self.contact if viewer_id else None,
+            "created_at": _iso(self.created_at),
+            "is_mine": bool(viewer_id and viewer_id == self.user_id),
+        }
+
+
+class ContentReport(db.Model):
+    """A signed-in user flagging a review / listing. One report per user per item."""
+    __tablename__ = "content_reports"
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "kind", "item_id", name="uq_report_once"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    kind = db.Column(db.String(12), nullable=False)       # review | market | lostfound
+    item_id = db.Column(db.Integer, nullable=False)
+    reason = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class UserSync(db.Model):
+    """Per-user blob of toolkit data (timetable, GPA, planner, …) for cross-device sync.
+
+    `data` maps a whitelisted key -> {"v": <value>, "t": <client ms timestamp>}.
+    Merge is last-write-wins per key.
+    """
+    __tablename__ = "user_sync"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True, index=True)
+    data = db.Column(db.JSON, default=dict)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
