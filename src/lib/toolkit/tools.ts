@@ -1,8 +1,8 @@
-import { CalendarDays, Calculator, ListChecks, Timer, UserCheck } from "lucide-react";
+import { CalendarDays, Calculator, FileText, ListChecks, Sprout, Timer, UserCheck } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface ToolMeta {
-  id: "timetable" | "gpa" | "planner" | "focus" | "attendance";
+  id: "timetable" | "gpa" | "planner" | "focus" | "attendance" | "skills" | "cv";
   href: string;
   title: string;
   /** one-line pitch shown on cards */
@@ -59,6 +59,24 @@ export const TOOLS: ToolMeta[] = [
     icon: UserCheck,
     gradient: "from-rose-500 to-pink-500",
     tint: "bg-rose-500/10 text-rose-700 dark:text-rose-300",
+  },
+  {
+    id: "skills",
+    href: "/tools/skills",
+    title: "Ko'nikmalar",
+    blurb: "IELTS, dasturlash, Excel — daraja, maqsad va har kungi mashq vaqtini kuzating. Mos ishlar topiladi.",
+    icon: Sprout,
+    gradient: "from-lime-500 to-green-500",
+    tint: "bg-lime-500/10 text-lime-700 dark:text-lime-300",
+  },
+  {
+    id: "cv",
+    href: "/tools/cv",
+    title: "CV yaratuvchi",
+    blurb: "O'zbek, ingliz yoki rus tilida tayyor CV — PDF qilib saqlang. Ko'nikmalaringiz avtomatik qo'shiladi.",
+    icon: FileText,
+    gradient: "from-indigo-500 to-blue-500",
+    tint: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300",
   },
 ];
 

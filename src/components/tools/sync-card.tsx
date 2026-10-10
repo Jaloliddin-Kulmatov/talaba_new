@@ -14,7 +14,7 @@ import { Panel } from "./ui";
 const EMPTY: SyncState = {};
 const LABEL: Record<string, string> = {
   "talaba:timetable:v1": "dars jadvali", "talaba:gpa:v1": "GPA", "talaba:planner:v1": "vazifalar",
-  "talaba:focus:v1": "fokus tarixi", "talaba:attendance:v1": "davomat",
+  "talaba:focus:v1": "fokus tarixi", "talaba:attendance:v1": "davomat", "talaba:skills:v1": "ko'nikmalar", "talaba:cv:v1": "CV",
 };
 
 export default function SyncCard() {

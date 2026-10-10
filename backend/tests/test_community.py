@@ -105,6 +105,7 @@ ok("only whitelisted keys are stored (auth token / foreign keys ignored)", list(
 d = js(call("put", "/api/sync", 1, {"data": {S: {"v": {"tasks": [2]}, "t": 500}}}))["data"]; ok("older edit does NOT overwrite newer data", d[S]["v"] == {"tasks": [1]})
 d = js(call("put", "/api/sync", 1, {"data": {S: {"v": {"tasks": [3]}, "t": 2000}}}))["data"]; ok("newer edit wins", d[S]["v"] == {"tasks": [3]} and d[S]["t"] == 2000)
 d = js(call("put", "/api/sync", 1, {"data": {"talaba:gpa:v1": {"v": {"mode": "uz5"}, "t": 3000}}}))["data"]; ok("keys merge independently", set(d) == {S, "talaba:gpa:v1"})
+ok("skills and CV data are syncable too", set(js(call("put", "/api/sync", 1, {"data": {"talaba:skills:v1": {"v": {"skills": []}, "t": 4000}, "talaba:cv:v1": {"v": {"fullName": "A"}, "t": 4000}}}))["data"]) >= {"talaba:skills:v1", "talaba:cv:v1"})
 ok("users are isolated", js(call("get", "/api/sync", 2))["data"] == {})
 for bad in ({"data": [1]}, {"data": {S: "x"}}, {"data": {S: {"v": 1}}}, {"data": {S: {"v": 1, "t": "now"}}}, {"data": {S: {"v": 1, "t": True}}}, {}):
     ok(f"rejects malformed payload {json.dumps(bad)[:40]}", call("put", "/api/sync", 1, bad).status_code == 400)

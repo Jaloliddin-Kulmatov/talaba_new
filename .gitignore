@@ -38,3 +38,6 @@ tsconfig.tsbuildinfo
 
 # Promo video renders are large binaries — regenerate with promo/README.md
 promo/*.mp4
+
+# compiled test output
+.test-out/

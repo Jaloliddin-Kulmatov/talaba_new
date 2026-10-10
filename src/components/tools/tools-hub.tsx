@@ -11,6 +11,7 @@ import { COMMUNITY_SERVICES } from "@/lib/community";
 import { useToolkitSummary, type ToolkitSummary } from "@/lib/toolkit/summary";
 import { formatDuration } from "@/lib/toolkit/time";
 import { fmtMinutes } from "@/lib/toolkit/focus";
+import { fmtHours } from "@/lib/toolkit/skills";
 import { FormError, Notice, Panel, Skeleton, useNotice } from "./ui";
 import SyncCard from "./sync-card";
 
@@ -34,6 +35,10 @@ function liveLine(id: ToolMeta["id"], s: ToolkitSummary): { text: string; tone?:
       return s.focusToday > 0
         ? { text: `Bugun ${fmtMinutes(s.focusToday)}${s.focusStreak > 1 ? ` · ${s.focusStreak} kun ketma-ket` : ""}`, tone: "ok" }
         : { text: "Bugun hali o'qimadingiz" };
+    case "skills":
+      return s.skillsCount === 0 ? { text: "Ko'nikma qo'shing" } : { text: `${s.skillsCount} ta ko'nikma · shu hafta ${fmtHours(s.skillsWeekMinutes)}`, tone: s.skillsWeekMinutes > 0 ? "ok" : undefined };
+    case "cv":
+      return s.cvPct === 0 ? { text: "CV yarating" } : { text: `CV ${s.cvPct}% tayyor`, tone: s.cvPct >= 80 ? "ok" : undefined };
     case "attendance":
       if (s.attendanceSubjects === 0) return { text: "Fanlarni qo'shing" };
       return s.attendanceAtRisk > 0

@@ -111,7 +111,43 @@ function AttendancePreview() {
   );
 }
 
+function SkillsPreview() {
+  const rows = [
+    { n: "IELTS", lv: 3, goal: 5 },
+    { n: "Python", lv: 2, goal: 4 },
+    { n: "Excel", lv: 4, goal: 5 },
+  ];
+  return (
+    <ul className="space-y-2.5" aria-hidden>
+      {rows.map((r) => (
+        <li key={r.n}>
+          <div className="mb-1 flex justify-between text-[11px] font-medium text-foreground"><span>{r.n}</span><span className="text-muted-foreground">{r.lv} / {r.goal}</span></div>
+          <div className="flex gap-1">{[1, 2, 3, 4, 5].map((n) => <span key={n} className={cn("h-1.5 flex-1 rounded-full", n <= r.lv ? "bg-lime-500" : n <= r.goal ? "bg-lime-500/25" : "bg-muted")} />)}</div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function CvPreview() {
+  return (
+    <div className="mx-auto w-36 rounded-md border border-border bg-white p-2.5 shadow-sm" aria-hidden>
+      <div className="h-2 w-20 rounded bg-slate-800" />
+      <div className="mt-1 h-1.5 w-14 rounded bg-slate-400" />
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="mt-2.5">
+          <div className="h-1 w-10 rounded bg-indigo-500" />
+          <div className="mt-1 h-1 w-full rounded bg-slate-200" />
+          <div className="mt-0.5 h-1 w-4/5 rounded bg-slate-200" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const PREVIEW: Record<ToolMeta["id"], React.ReactNode> = {
+  skills: <SkillsPreview />,
+  cv: <CvPreview />,
   timetable: <TimetablePreview />,
   gpa: <GpaPreview />,
   planner: <PlannerPreview />,
@@ -120,6 +156,8 @@ const PREVIEW: Record<ToolMeta["id"], React.ReactNode> = {
 };
 
 const LAYOUT: Record<ToolMeta["id"], string> = {
+  skills: "",
+  cv: "",
   timetable: "lg:col-span-2",
   gpa: "",
   planner: "",
@@ -128,7 +166,7 @@ const LAYOUT: Record<ToolMeta["id"], string> = {
 };
 
 export default function ToolkitSection() {
-  const order: ToolMeta["id"][] = ["timetable", "gpa", "planner", "focus", "attendance"];
+  const order: ToolMeta["id"][] = ["timetable", "gpa", "planner", "focus", "attendance", "skills", "cv"];
   return (
     <section className="relative px-4 py-20 sm:px-6" id="tools">
       <div className="mx-auto max-w-7xl">

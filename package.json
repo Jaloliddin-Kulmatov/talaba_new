@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p $PORT",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:logic": "tsc -p tsconfig.test.json && node tests/toolkit.test.cjs"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.0.4",

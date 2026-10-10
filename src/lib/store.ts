@@ -24,6 +24,8 @@ export const SYNC_KEYS = [
   "talaba:planner:v1",
   "talaba:focus:v1",
   "talaba:attendance:v1",
+  "talaba:skills:v1",
+  "talaba:cv:v1",
 ] as const;
 export const SYNC_META_KEY = "talaba:sync-meta";     // { [key]: last local edit time (ms) }
 export const SYNC_STATE_KEY = "talaba:sync-state";   // { lastSyncedAt?, error? } — shown in the UI

@@ -10,6 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Search, SlidersHorizontal, Sparkles, TrendingUp, CheckCircle2, MapPin, BellRing, BellOff, Loader2, X } from "lucide-react";
 import { JOB_CATEGORIES, UNIVERSITIES } from "@/lib/constants";
 import { useAuth } from "@/lib/auth";
+import Link from "next/link";
+import { useLocalStore } from "@/lib/store";
+import { EMPTY_SKILLS, SKILLS_KEY } from "@/lib/toolkit/skills";
+import { EMPTY_TIMETABLE, TIMETABLE_KEY, weeklyClassHours } from "@/lib/toolkit/timetable";
+import { rankJobs, scoreJob } from "@/lib/toolkit/matching";
 import type { Job } from "@/types";
 
 const ALERT_FIELDS = ["IT / Dasturlash", "Marketing", "Muhandislik", "Biznes / Boshqaruv", "Dizayn", "Moliya", "Tadqiqot", "Media / Kontent", "Savdo", "Barcha yo'nalishlar"];
@@ -27,6 +32,9 @@ export default function JobsPage() {
   const [regionFilter, setRegionFilter] = useState(false);
   const [allJobs, setAllJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<"new" | "match" | "applied">("new");
+  const [skillsData] = useLocalStore(SKILLS_KEY, EMPTY_SKILLS);
+  const [timetable] = useLocalStore(TIMETABLE_KEY, EMPTY_TIMETABLE);
   const [alertsEnabled, setAlertsEnabled] = useState(false);
   const [alertsBusy, setAlertsBusy] = useState(false);
   const [showAlertModal, setShowAlertModal] = useState(false);
@@ -163,7 +171,7 @@ export default function JobsPage() {
   const toggleSchedule = (v: string) =>
     setScheduleFilter((prev) => prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]);
 
-  const filteredJobs = allJobs.filter((job) => {
+  const filteredJobs = useMemo(() => allJobs.filter((job) => {
     const matchSearch = !search || job.title.toLowerCase().includes(search.toLowerCase()) || job.company.toLowerCase().includes(search.toLowerCase());
     const matchCategory = activeCategory === "Barchasi" || job.type.toLowerCase().replace("-", " ") === activeCategory.toLowerCase() || (activeCategory === "Masofaviy" && job.location.includes("Onlayn"));
     const matchSchedule = scheduleFilter.length === 0 || scheduleFilter.some((v) => job.scheduleCompatible.includes(v));
@@ -177,7 +185,26 @@ export default function JobsPage() {
     }
 
     return matchSearch && matchCategory && matchSchedule && matchRegion;
-  });
+  }), [allJobs, search, activeCategory, scheduleFilter, regionFilter, myRegion]);
+
+  // "Menga mos" sorts by how well the student's tracked skills and class load fit each job.
+  const matchOn = sortBy === "match";
+  const classHours = useMemo(() => weeklyClassHours(timetable), [timetable]);
+  const matches = useMemo(() => {
+    const m = new Map<string, { score: number; reasons: string[] }>();
+    if (!matchOn) return m;
+    filteredJobs.forEach((job) => m.set(job.id, scoreJob(job, skillsData.skills, { classHoursPerWeek: classHours })));
+    return m;
+  }, [matchOn, filteredJobs, skillsData.skills, classHours]);
+  const shownJobs = useMemo(() => {
+    if (sortBy === "match") return rankJobs(filteredJobs, skillsData.skills, { classHoursPerWeek: classHours }).map((r) => r.job);
+    if (sortBy === "applied") return [...filteredJobs].sort((a, b) => (b.applyCount ?? b.applications ?? 0) - (a.applyCount ?? a.applications ?? 0));
+    return filteredJobs;
+  }, [sortBy, filteredJobs, skillsData.skills, classHours]);
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("match") === "1") setSortBy("match");
+  }, []);
 
   // Load saved alert preferences from localStorage on mount
   React.useEffect(() => {
@@ -353,13 +380,34 @@ export default function JobsPage() {
                 <p className="text-sm text-muted-foreground">
                   <span className="text-foreground font-medium">{filteredJobs.length}</span> ta natija topildi
                 </p>
-                <select className="text-xs bg-muted/50 border border-border rounded-lg px-3 py-1.5 text-muted-foreground focus:outline-none focus:border-blue-500/50">
-                  <option>Eng so'nggi</option>
-                  <option>Maosh: yuqoridan pastga</option>
-                  <option>Ko'p ariza berilgan</option>
-                  <option>Muddati yaqinlashgan</option>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as "new" | "match" | "applied")}
+                  aria-label="Saralash"
+                  className="text-xs bg-muted/50 border border-border rounded-lg px-3 py-1.5 text-muted-foreground focus:outline-none focus:border-blue-500/50"
+                >
+                  <option value="new">Eng so&apos;nggi</option>
+                  <option value="match">Menga mos</option>
+                  <option value="applied">Ko&apos;p ariza berilgan</option>
                 </select>
               </div>
+
+              {matchOn && (
+                <div className="mb-4 rounded-2xl border border-blue-500/25 bg-blue-500/5 p-4 text-sm">
+                  {skillsData.skills.length === 0 ? (
+                    <p className="text-foreground">
+                      Mos ishlarni ko&apos;rsatish uchun ko&apos;nikmalaringizni qo&apos;shing.{" "}
+                      <Link href="/tools/skills" className="font-semibold text-blue-600 hover:underline dark:text-blue-400">Ko&apos;nikmalarga o&apos;tish →</Link>
+                    </p>
+                  ) : (
+                    <p className="text-muted-foreground">
+                      <b className="text-foreground">{skillsData.skills.length} ta ko&apos;nikmangiz</b>
+                      {classHours > 0 ? <> va haftasiga <b className="text-foreground">{classHours} soat</b> dars jadvalingiz</> : null} asosida saralandi.{" "}
+                      <Link href="/tools/skills" className="font-medium text-blue-600 hover:underline dark:text-blue-400">Ko&apos;nikmalarni tahrirlash</Link>
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-4">
                 {loading ? (
@@ -367,8 +415,8 @@ export default function JobsPage() {
                 ) : filteredJobs.length === 0 ? (
                   <div className="py-16 text-center text-muted-foreground text-sm">Filtrlaringizga mos e'lon topilmadi.</div>
                 ) : (
-                  filteredJobs.map((job) => (
-                    <JobCard key={job.id} job={job} />
+                  shownJobs.map((job) => (
+                    <JobCard key={job.id} job={job} match={matches.get(job.id)} />
                   ))
                 )}
               </div>

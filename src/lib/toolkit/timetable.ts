@@ -121,6 +121,16 @@ export function nowStatus(today: ClassEntry[], now: Date): NowStatus {
   return { state: "done" };
 }
 
+/** Average weekly hours in class: weekly classes count fully, odd/even-week ones half. */
+export function weeklyClassHours(data: TimetableData): number {
+  let mins = 0;
+  for (const c of data.classes) {
+    const d = toMin(c.end) - toMin(c.start);
+    if (d > 0) mins += c.weeks === "all" ? d : d / 2;
+  }
+  return Math.round((mins / 60) * 10) / 10;
+}
+
 export interface Placed {
   entry: ClassEntry;
   lane: number;

@@ -201,3 +201,11 @@
     transition-duration: .01ms !important;
   }
 }
+
+/* ─── CV printing: show only the portal copy, A4, no browser margins ─── */
+@media print {
+  @page { size: A4; margin: 0; }
+  html, body { background: #fff !important; height: auto !important; }
+  body > *:not(#cv-print-root) { display: none !important; }
+  #cv-print-root { display: block !important; width: 210mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

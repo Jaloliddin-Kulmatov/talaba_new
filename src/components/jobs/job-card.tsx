@@ -44,6 +44,8 @@ const typeConfig: Record<Job["type"], { label: string; variant: "default" | "suc
 };
 
 interface JobCardProps {
+  /** from the skills matcher; shown as a pill with the reasons */
+  match?: { score: number; reasons: string[] };
   job: Job;
   featured?: boolean;
 }
@@ -63,7 +65,7 @@ function formatDeadline(raw?: string): string | null {
   return `${d.getUTCDate()}-${UZ_MONTHS[d.getUTCMonth()]}, ${d.getUTCFullYear()}`;
 }
 
-export default function JobCard({ job, featured = false }: JobCardProps) {
+export default function JobCard({ job, featured = false, match }: JobCardProps) {
   const [bookmarked, setBookmarked] = useState(() => Bookmarks.jobs.has(job.id));
   // Optimistic apply count — bumps immediately on click so the UI feels
   // responsive even before the network call returns.
@@ -104,6 +106,14 @@ export default function JobCard({ job, featured = false }: JobCardProps) {
               )}
             </div>
             <p className="text-xs text-muted-foreground">{job.company}</p>
+            {match && match.score > 0 && (
+              <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${match.score >= 60 ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" : "bg-blue-500/10 text-blue-700 dark:text-blue-300"}`}>
+                  Moslik {match.score}%
+                </span>
+                {match.reasons.length > 0 && <span className="text-[11px] text-muted-foreground">{match.reasons.join(" · ")}</span>}
+              </p>
+            )}
           </div>
         </div>
 

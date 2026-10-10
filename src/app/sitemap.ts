@@ -19,6 +19,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/tools/gpa`,         lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/tools/planner`,     lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/tools/focus`,       lastModified: now, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE}/tools/skills`,      lastModified: now, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE}/tools/cv`,          lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/tools/attendance`,  lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/reviews`,           lastModified: now, changeFrequency: "daily",   priority: 0.8 },
     { url: `${BASE}/market`,            lastModified: now, changeFrequency: "daily",   priority: 0.8 },

@@ -1,0 +1,27 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": ".test-out",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "jsx": "preserve",
+    "incremental": false,
+    "allowJs": false,
+    "plugins": []
+  },
+  "include": [
+    "src/lib/toolkit/time.ts",
+    "src/lib/toolkit/timetable.ts",
+    "src/lib/toolkit/gpa.ts",
+    "src/lib/toolkit/planner.ts",
+    "src/lib/toolkit/focus.ts",
+    "src/lib/toolkit/attendance.ts",
+    "src/lib/toolkit/skills.ts",
+    "src/lib/toolkit/matching.ts",
+    "next-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

@@ -6,6 +6,8 @@ import { useNow } from "./hooks";
 import { ATTENDANCE_KEY, EMPTY_ATTENDANCE, statusOf } from "./attendance";
 import { EMPTY_FOCUS, FOCUS_KEY, minutesOn, streak } from "./focus";
 import { EMPTY_GPA, GPA_KEY, statsFor } from "./gpa";
+import { EMPTY_SKILLS, SKILLS_KEY, activityStreak, weekMinutes } from "./skills";
+import { CV_KEY, EMPTY_CV, completeness, skillList } from "./cv";
 import {
   EMPTY_PLANNER, PLANNER_KEY, TASK_GROUP_ORDER, examCountdown, groupTasks, upcomingExams,
   type Exam, type Task,
@@ -33,6 +35,9 @@ export interface ToolkitSummary {
   focusStreak: number;
   attendanceSubjects: number;
   attendanceAtRisk: number;
+  skillsCount: number;
+  skillsWeekMinutes: number;
+  cvPct: number;
   /** true once the student has entered anything in any tool */
   hasAnyData: boolean;
 }
@@ -45,6 +50,8 @@ export function useToolkitSummary(): ToolkitSummary | null {
   const [gpa] = useLocalStore(GPA_KEY, EMPTY_GPA);
   const [fo] = useLocalStore(FOCUS_KEY, EMPTY_FOCUS);
   const [at] = useLocalStore(ATTENDANCE_KEY, EMPTY_ATTENDANCE);
+  const [sk] = useLocalStore(SKILLS_KEY, EMPTY_SKILLS);
+  const [cv] = useLocalStore(CV_KEY, EMPTY_CV);
 
   return useMemo(() => {
     if (!now) return null;
@@ -72,9 +79,12 @@ export function useToolkitSummary(): ToolkitSummary | null {
       focusStreak: streak(fo, now),
       attendanceSubjects: at.subjects.length,
       attendanceAtRisk: risky,
+      skillsCount: sk.skills.length,
+      skillsWeekMinutes: sk.skills.reduce((n, s) => n + weekMinutes(s, now), 0),
+      cvPct: cv.fullName.trim() ? completeness(cv, skillList(cv, sk.skills).length).pct : 0,
       hasAnyData:
         tt.classes.length > 0 || pl.tasks.length > 0 || pl.exams.length > 0 || g.count > 0 ||
-        fo.sessions.length > 0 || at.subjects.length > 0,
+        fo.sessions.length > 0 || at.subjects.length > 0 || sk.skills.length > 0,
     };
-  }, [now, tt, pl, gpa, fo, at]);
+  }, [now, tt, pl, gpa, fo, at, sk, cv]);
 }

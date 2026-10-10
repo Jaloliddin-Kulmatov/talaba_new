@@ -16,6 +16,8 @@ SYNC_KEYS = {
     "talaba:planner:v1",
     "talaba:focus:v1",
     "talaba:attendance:v1",
+    "talaba:skills:v1",
+    "talaba:cv:v1",
 }
 MAX_KEY_BYTES = 200_000
 MAX_TOTAL_BYTES = 600_000
