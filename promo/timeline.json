@@ -1,0 +1,84 @@
+{
+ "yt": [
+  {
+   "scene": "hook",
+   "caption": "Jadval bir joyda, GPA boshqa joyda, vazifalar esdan chiqqan. Tanish holatmi?",
+   "file": "audio/yt-0.mp3",
+   "dur": 7.08
+  },
+  {
+   "scene": "brand",
+   "caption": "Endi hammasi bir joyda. TALABA — o'zbek talabalari uchun yagona platforma.",
+   "file": "audio/yt-1.mp3",
+   "dur": 5.71
+  },
+  {
+   "scene": "timetable",
+   "caption": "Jadvalni bir marta kiriting. Toq va juft haftalar, Telegramga ulashish.",
+   "file": "audio/yt-2.mp3",
+   "dur": 12.38
+  },
+  {
+   "scene": "gpa",
+   "caption": "GPA ni hisoblang — maqsadga qanday baho kerakligini bilib oling.",
+   "file": "audio/yt-3.mp3",
+   "dur": 5.71
+  },
+  {
+   "scene": "tools",
+   "caption": "Vazifalar, imtihon sanog'i, fokus taymer va davomat nazorati. Hammasi qo'lingizda.",
+   "file": "audio/yt-4.mp3",
+   "dur": 6.98
+  },
+  {
+   "scene": "platform",
+   "caption": "Klublar, ish va amaliyot, qabul va DTM, turargoh, stipendiya va AI yordamchi.",
+   "file": "audio/yt-5.mp3",
+   "dur": 10.25
+  },
+  {
+   "scene": "cta",
+   "caption": "Ro'yxatdan o'tmasdan ham ishlaydi. Bepul. Hoziroq boshlang!",
+   "file": "audio/yt-6.mp3",
+   "dur": 7.68
+  }
+ ],
+ "ig": [
+  {
+   "scene": "hook",
+   "caption": "Jadval alohida, GPA alohida, vazifalar esdan chiqqan? Yetar!",
+   "file": "audio/ig-0.mp3",
+   "dur": 5.38
+  },
+  {
+   "scene": "brand",
+   "caption": "TALABA — o'zbek talabalari uchun yagona platforma.",
+   "file": "audio/ig-1.mp3",
+   "dur": 3.55
+  },
+  {
+   "scene": "timetable",
+   "caption": "Dars jadvalingiz doim ko'z oldingizda.",
+   "file": "audio/ig-2.mp3",
+   "dur": 5.5
+  },
+  {
+   "scene": "tools",
+   "caption": "GPA, vazifalar, fokus taymer, davomat.",
+   "file": "audio/ig-3.mp3",
+   "dur": 4.49
+  },
+  {
+   "scene": "platform",
+   "caption": "Klublar, ish, qabul va AI yordamchi ham shu yerda.",
+   "file": "audio/ig-4.mp3",
+   "dur": 4.3
+  },
+  {
+   "scene": "cta",
+   "caption": "Bepul. Ro'yxatdan o'tmasdan. talaba.uz",
+   "file": "audio/ig-5.mp3",
+   "dur": 4.32
+  }
+ ]
+}

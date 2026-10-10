@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>TALABA promo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;background:#05080f;color:#cbd5e1;font:14px Inter,system-ui,sans-serif}
+  #wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px}
+  canvas{max-width:100%;max-height:calc(100vh - 70px);background:#000;display:block}
+  #bar{display:flex;gap:8px;align-items:center}
+  button{background:#2563eb;color:#fff;border:0;border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer}
+  #status{opacity:.8}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+  <div id="bar"><button id="play">Ko'rish</button><button id="rec">Yozib olish (MP4)</button><button id="off">MP4 (kadrma-kadr)</button><span id="status">tayyor</span></div>
+</div>
+<script>
+// ════════════════════════════════════════════════════════════════════
+//  TALABA promo — canvas renderer + WebAudio (voice, synthesized music, SFX) + MP4 recorder
+// ════════════════════════════════════════════════════════════════════
+const Q = new URLSearchParams(location.search);
+const KIND = Q.get("v") || "yt";            // yt = 16:9 (1920x1080), ig = 9:16 (1080x1920)
+const P = KIND === "ig";
+const W = P ? 1080 : 1920, H = P ? 1920 : 1080;
+const TOP = P ? 230 : 90, BOT = P ? 1490 : 830;   // content-safe vertical range (captions live below BOT)
+const cv = document.getElementById("c"); cv.width = W; cv.height = H;
+const ctx = cv.getContext("2d");
+const $status = document.getElementById("status");
+
+// ── helpers ─────────────────────────────────────────────────────────
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const E = {
+  out: x => 1 - Math.pow(1 - x, 3),
+  in: x => x * x * x,
+  inOut: x => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2),
+  back: x => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); },
+  lin: x => x,
+};
+const an = (lt, s, d, ease = E.out) => ease(clamp((lt - s) / d));
+const C = {
+  navy: "#0a1020", blue: "#2563eb", blue2: "#3b82f6", cyan: "#06b6d4", teal: "#0891b2", emerald: "#10b981",
+  violet: "#8b5cf6", amber: "#f59e0b", rose: "#f43f5e", sky: "#229ED9",
+  ink: "#0f172a", mute: "#64748b", line: "#e2e8f0", card: "#ffffff", soft: "#f1f5f9",
+};
+const DISPLAY = '"Plus Jakarta Sans", Inter, system-ui, sans-serif', BODY = 'Inter, system-ui, sans-serif';
+
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+function card(x, y, w, h, o = {}) {
+  ctx.save();
+  if (o.shadow !== false) { ctx.shadowColor = o.shadowColor || "rgba(2,8,30,.45)"; ctx.shadowBlur = o.blur ?? 50; ctx.shadowOffsetY = o.dy ?? 22; }
+  rr(x, y, w, h, o.r ?? 32); ctx.fillStyle = o.fill || C.card; ctx.fill();
+  ctx.restore();
+  if (o.stroke) { ctx.save(); rr(x, y, w, h, o.r ?? 32); ctx.strokeStyle = o.stroke; ctx.lineWidth = o.lw || 2; ctx.stroke(); ctx.restore(); }
+}
+function txt(s, x, y, o = {}) {
+  ctx.save();
+  ctx.font = `${o.weight || 600} ${o.size || 40}px ${o.family || BODY}`;
+  ctx.fillStyle = o.color || "#fff"; ctx.textAlign = o.align || "left"; ctx.textBaseline = o.base || "alphabetic";
+  if (o.ls) ctx.letterSpacing = o.ls + "px";
+  if (o.alpha !== undefined) ctx.globalAlpha *= o.alpha;
+  ctx.fillText(s, x, y); ctx.restore();
+}
+function measure(s, size, weight = 600, family = BODY) { ctx.save(); ctx.font = `${weight} ${size}px ${family}`; const w = ctx.measureText(s).width; ctx.restore(); return w; }
+function wrap(s, maxW, size, weight = 600, family = BODY) {
+  ctx.save(); ctx.font = `${weight} ${size}px ${family}`;
+  const words = s.split(" "), lines = []; let cur = "";
+  for (const w of words) { const t = cur ? cur + " " + w : w; if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; }
+  if (cur) lines.push(cur); ctx.restore(); return lines;
+}
+function gradText(s, x, y, size, c1, c2, o = {}) {
+  const w = measure(s, size, o.weight || 800, o.family || DISPLAY);
+  const x0 = o.align === "center" ? x - w / 2 : x;
+  const g = ctx.createLinearGradient(x0, 0, x0 + w, 0); g.addColorStop(0, c1); g.addColorStop(1, c2);
+  txt(s, x, y, { ...o, size, color: g, weight: o.weight || 800, family: o.family || DISPLAY });
+}
+function pill(x, y, label, o = {}) {           // returns width
+  const size = o.size || 30, padX = o.padX ?? 26, h = o.h || size * 2;
+  const w = measure(label, size, o.weight || 600) + padX * 2 + (o.dot ? size * .9 : 0);
+  ctx.save();
+  rr(x, y, w, h, h / 2); ctx.fillStyle = o.fill || C.card; if (o.shadow) { ctx.shadowColor = "rgba(2,8,30,.35)"; ctx.shadowBlur = 24; ctx.shadowOffsetY = 10; } ctx.fill();
+  ctx.shadowColor = "transparent"; if (o.stroke) { ctx.strokeStyle = o.stroke; ctx.lineWidth = 2; ctx.stroke(); }
+  ctx.restore();
+  let tx = x + padX;
+  if (o.dot) { ctx.beginPath(); ctx.arc(tx + size * .25, y + h / 2, size * .22, 0, 7); ctx.fillStyle = o.dot; ctx.fill(); tx += size * .9; }
+  txt(label, tx, y + h / 2, { size, weight: o.weight || 600, color: o.color || C.ink, base: "middle" });
+  return w;
+}
+function glow(x, y, r, color) { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, color); g.addColorStop(1, "rgba(0,0,0,0)"); ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2); }
+function sparkle(x, y, s, a = 1) {
+  ctx.save(); ctx.globalAlpha *= a; ctx.translate(x, y); ctx.fillStyle = "#fff"; ctx.beginPath();
+  ctx.moveTo(0, -s); ctx.quadraticCurveTo(s * .12, -s * .12, s, 0); ctx.quadraticCurveTo(s * .12, s * .12, 0, s);
+  ctx.quadraticCurveTo(-s * .12, s * .12, -s, 0); ctx.quadraticCurveTo(-s * .12, -s * .12, 0, -s); ctx.fill(); ctx.restore();
+}
+function ring(cx, cy, r, lw, pct, color, track = "#e2e8f0") {
+  ctx.save(); ctx.lineWidth = lw; ctx.lineCap = "round";
+  ctx.strokeStyle = track; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  if (pct > 0) { ctx.strokeStyle = color; ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * pct); ctx.stroke(); }
+  ctx.restore();
+}
+function check(x, y, s, p, color = C.emerald) {      // animated tick in a circle
+  ctx.save(); ctx.beginPath(); ctx.arc(x, y, s, 0, 7);
+  if (p > 0) { ctx.fillStyle = color; ctx.globalAlpha *= clamp(p * 3); ctx.fill(); ctx.globalAlpha = 1; }
+  ctx.lineWidth = s * .16; ctx.strokeStyle = p > 0 ? color : "#cbd5e1"; ctx.stroke();
+  if (p > 0) { ctx.strokeStyle = "#fff"; ctx.lineWidth = s * .2; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.beginPath();
+    const a = [x - s * .38, y + s * .02], b = [x - s * .1, y + s * .3], c = [x + s * .42, y - s * .28];
+    const k = clamp(p * 1.4 - .2); ctx.moveTo(...a);
+    const k1 = clamp(k * 2), k2 = clamp(k * 2 - 1);
+    ctx.lineTo(lerp(a[0], b[0], k1), lerp(a[1], b[1], k1)); if (k2 > 0) ctx.lineTo(lerp(b[0], c[0], k2), lerp(b[1], c[1], k2)); ctx.stroke(); }
+  ctx.restore();
+}
+function logo(cx, cy, r) {                         // mortarboard mark, same geometry as /public/logo.svg
+  const s = r / 30; ctx.save(); ctx.translate(cx - 32 * s, cy - 32 * s); ctx.scale(s, s);
+  const g = ctx.createLinearGradient(6, 4, 58, 60); g.addColorStop(0, "#2563eb"); g.addColorStop(.55, "#0891b2"); g.addColorStop(1, "#10b981");
+  ctx.save(); ctx.shadowColor = "rgba(37,99,235,.55)"; ctx.shadowBlur = 40 * s; ctx.shadowOffsetY = 8 * s;
+  ctx.beginPath(); ctx.arc(32, 32, 30, 0, 7); ctx.fillStyle = g; ctx.fill(); ctx.restore();
+  const sh = ctx.createRadialGradient(22, 15, 0, 22, 15, 38); sh.addColorStop(0, "rgba(255,255,255,.28)"); sh.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.beginPath(); ctx.arc(32, 32, 30, 0, 7); ctx.fillStyle = sh; ctx.fill();
+  ctx.fillStyle = "#fff"; ctx.fill(new Path2D("M32 17.5 55 28.5 32 39.5 9 28.5Z"));
+  ctx.fillStyle = "rgba(255,255,255,.88)"; ctx.fill(new Path2D("M19.5 34.2v8.3c0 3.3 5.6 6.2 12.5 6.2s12.5-2.9 12.5-6.2v-8.3L32 40.6Z"));
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 2.2; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(50.5, 30.7); ctx.lineTo(50.5, 41.7); ctx.stroke();
+  ctx.beginPath(); ctx.arc(50.5, 44.2, 2.4, 0, 7); ctx.fillStyle = "#fff"; ctx.fill(); ctx.restore();
+}
+function plane(x, y, s, color = "#fff") { ctx.save(); ctx.translate(x - 12 * s, y - 12 * s); ctx.scale(s, s); ctx.fillStyle = color; ctx.fill(new Path2D("M2 11.5 22 3l-4.6 18-5.2-6.2-4.3 3.7.3-6Z")); ctx.restore(); }
+
+// ── background (continuous across the whole film) ───────────────────
+function bg(t) {
+  const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, "#0a1020"); g.addColorStop(1, "#0d1b38");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const orbs = [[.18, .22, .62, "rgba(37,99,235,.42)", .11], [.86, .78, .55, "rgba(16,185,129,.30)", .09], [.72, .14, .42, "rgba(139,92,246,.26)", .07], [.3, .88, .38, "rgba(6,182,212,.20)", .08]];
+  for (const [x, y, r, c, sp] of orbs) glow((x + .07 * Math.sin(t * sp * 6.28)) * W, (y + .05 * Math.cos(t * sp * 5)) * H, r * Math.max(W, H) * (P ? .85 : .6), c);
+  ctx.fillStyle = "rgba(148,163,184,.10)";
+  for (let x = 24; x < W; x += 54) for (let y = 24; y < H; y += 54) ctx.fillRect(x, y, 3, 3);
+}
+
+// ── scenes ──────────────────────────────────────────────────────────
+const CHIPS = [
+  ["Dars jadvali", C.blue2], ["GPA", C.violet], ["Vazifalar", C.amber], ["Imtihon sanasi", C.rose],
+  ["Davomat", C.emerald], ["Konspekt", C.cyan], ["Telegram guruh", C.sky], ["Fokus", "#22c55e"],
+];
+const CHIP_POS = P
+  ? [[.27, .07], [.72, .13], [.2, .24], [.8, .3], [.25, .74], [.78, .79], [.36, .87], [.7, .89]]
+  : [[.14, .18], [.82, .14], [.07, .55], [.9, .52], [.2, .93], [.76, .95], [.45, .06], [.58, .97]];
+
+function chip(x, y, label, color, scale = 1, rot = 0, a = 1, q = false) {
+  const size = P ? 40 : 34, h = size * 2.1, w = measure(label, size, 700) + size * 2.4;
+  ctx.save(); ctx.globalAlpha *= a; ctx.translate(x, y); ctx.rotate(rot); ctx.scale(scale, scale);
+  card(-w / 2, -h / 2, w, h, { r: h / 2, blur: 30, dy: 12 });
+  ctx.beginPath(); ctx.arc(-w / 2 + size * 1.0, 0, size * .28, 0, 7); ctx.fillStyle = color; ctx.fill();
+  txt(label, -w / 2 + size * 1.6, 0, { size, weight: 700, color: C.ink, base: "middle" });
+  if (q) { ctx.beginPath(); ctx.arc(w / 2 - 6, -h / 2 + 4, size * .45, 0, 7); ctx.fillStyle = C.rose; ctx.fill(); txt("?", w / 2 - 6, -h / 2 + 5, { size: size * .6, weight: 800, align: "center", base: "middle" }); }
+  ctx.restore();
+}
+
+function sceneHook(lt, d, t) {
+  const cx = W / 2, ay = TOP + (BOT - TOP);
+  const suck = an(lt, d - .9, .9, E.in);                       // chips get pulled to the centre at the end
+  CHIPS.forEach(([label, color], i) => {
+    const [fx, fy] = CHIP_POS[i];
+    const bx = fx * W + Math.sin(t * (.9 + i * .13) + i * 2) * (P ? 26 : 40);
+    const by = lerp(TOP, BOT, fy) + Math.cos(t * (.8 + i * .11) + i) * (P ? 30 : 26);
+    const pop = an(lt, .12 * i + .1, .55, E.back);
+    const x = lerp(bx, cx, suck), y = lerp(by, (TOP + BOT) / 2, suck);
+    chip(x, y, label, color, pop * (1 - suck * .65), Math.sin(t * 1.3 + i) * .14 * (1 - suck), 1 - suck * .5, i % 3 === 0);
+  });
+  const hy = (TOP + BOT) / 2 + (P ? -20 : -10), hs = P ? 150 : 170, a = an(lt, .5, .7);
+  ctx.save(); ctx.globalAlpha *= a * (1 - suck); ctx.translate(0, (1 - a) * 40);
+  txt("Hammasi", cx, hy - hs * .1, { size: hs, weight: 800, family: DISPLAY, align: "center" });
+  gradText("tarqoqmi?", cx, hy + hs * 1.0, hs, "#fbbf24", "#fb7185", { align: "center" });
+  ctx.restore();
+}
+
+function sceneBrand(lt, d, t) {
+  const cx = W / 2, cy = P ? 640 : 285, R = P ? 190 : 135;
+  const k = an(lt, .05, .8, E.back);
+  for (let i = 0; i < 3; i++) { const p = clamp((lt - .05 - i * .22) / 1.3); if (p > 0 && p < 1) { ctx.save(); ctx.globalAlpha *= (1 - p) * .55; ctx.beginPath(); ctx.arc(cx, cy, R * (1 + p * 2.2), 0, 7); ctx.strokeStyle = i % 2 ? C.emerald : C.blue2; ctx.lineWidth = 5; ctx.stroke(); ctx.restore(); } }
+  glow(cx, cy, R * 2.6, "rgba(59,130,246,.35)");
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(k, k); ctx.rotate((1 - k) * -.5); logo(0, 0, R); ctx.restore();
+  for (let i = 0; i < 12; i++) { const ang = i * .52 + t * .6, rad = R * (1.5 + .35 * Math.sin(t * 2 + i)); sparkle(cx + Math.cos(ang) * rad, cy + Math.sin(ang) * rad * .8, 10 + (i % 3) * 6, an(lt, .5 + i * .04, .4) * (.5 + .5 * Math.sin(t * 3 + i))); }
+  const ws = P ? 190 : 150, wy = cy + R + (P ? 250 : 195), word = "TALABA";
+  const total = measure(word + ".", ws, 800, DISPLAY); let x = cx - total / 2;
+  [...word + "."].forEach((ch, i) => {
+    const a = an(lt, .55 + i * .07, .45), w = measure(ch, ws, 800, DISPLAY);
+    ctx.save(); ctx.globalAlpha *= a; ctx.translate(0, (1 - a) * 50);
+    txt(ch, x, wy, { size: ws, weight: 800, family: DISPLAY, color: ch === "." ? C.blue2 : "#fff" }); ctx.restore(); x += w;
+  });
+  const a2 = an(lt, 1.3, .6);
+  txt("O'zbek talabalari uchun", cx, wy + (P ? 100 : 78), { size: P ? 56 : 46, weight: 600, color: "#cbd5e1", align: "center", alpha: a2 });
+  gradText("yagona platforma", cx, wy + (P ? 175 : 140), P ? 78 : 62, "#60a5fa", "#34d399", { align: "center", alpha: a2 });
+}
+
+// — mock UI blocks ————————————————————————————————
+const CLASSES = [
+  ["08:30", "09:50", "Oliy matematika", "204-xona", C.blue2],
+  ["10:00", "11:20", "Ingliz tili", "117-xona", C.emerald],
+  ["11:30", "12:50", "Dasturlash asoslari", "Lab 3", C.violet],
+  ["13:30", "14:50", "Iqtisodiyot", "12-xona", C.cyan],
+];
+function todayCard(x, y, w, lt, flipAt) {
+  const flipped = lt > flipAt, pad = w * .05, rowH = w * .165, headH = w * .2, n = P ? 3 : 4;
+  const h = headH + n * (rowH + w * .026) + pad * 1.2;
+  card(x, y, w, h, { r: w * .045 });
+  txt("BUGUN", x + pad, y + pad + w * .035, { size: w * .03, weight: 700, color: C.mute, ls: 2 });
+  txt("payshanba, 9-oktabr", x + pad, y + pad + w * .095, { size: w * .052, weight: 800, family: DISPLAY, color: C.ink });
+  const chipTxt = flipped ? "Juft hafta" : "Toq hafta", cw = measure(chipTxt, w * .034, 600) + w * .07, pulse = flipped ? 1 + .1 * Math.sin(clamp((lt - flipAt) / .35) * Math.PI) : 1;
+  ctx.save(); ctx.translate(x + w - pad - cw / 2, y + pad + w * .06); ctx.scale(pulse, pulse);
+  rr(-cw / 2, -w * .035, cw, w * .07, w * .035); ctx.fillStyle = flipped ? "rgba(139,92,246,.14)" : C.soft; ctx.fill();
+  txt(chipTxt, 0, 0, { size: w * .034, weight: 600, color: flipped ? C.violet : C.ink, align: "center", base: "middle" }); ctx.restore();
+  CLASSES.slice(0, n).forEach((c, i) => {
+    let [s, e, name, room, col] = c; if (flipped && i === 2) { name = "Fizika"; room = "Lab 1"; col = C.amber; }
+    const a = an(lt, .35 + i * .22, .5), ry = y + headH + i * (rowH + w * .026) + (1 - a) * 40;
+    ctx.save(); ctx.globalAlpha *= a;
+    const live = i === 0;
+    if (live) { ctx.shadowColor = `rgba(16,185,129,${.25 + .15 * Math.sin(lt * 5)})`; ctx.shadowBlur = 26; }
+    rr(x + pad, ry, w - pad * 2, rowH, w * .03); ctx.fillStyle = live ? "rgba(16,185,129,.07)" : C.card; ctx.fill(); ctx.shadowColor = "transparent";
+    ctx.strokeStyle = live ? "rgba(16,185,129,.55)" : C.line; ctx.lineWidth = 2; ctx.stroke();
+    txt(s, x + pad + w * .035, ry + rowH * .36, { size: w * .032, weight: 700, color: C.ink, base: "middle" });
+    txt(e, x + pad + w * .035, ry + rowH * .68, { size: w * .028, weight: 500, color: C.mute, base: "middle" });
+    rr(x + pad + w * .16, ry + rowH * .17, w * .01, rowH * .66, w * .005); ctx.fillStyle = col; ctx.fill();
+    txt(name, x + pad + w * .2, ry + rowH * .38, { size: w * .04, weight: 700, color: C.ink, base: "middle" });
+    txt(room, x + pad + w * .2, ry + rowH * .70, { size: w * .03, weight: 500, color: C.mute, base: "middle" });
+    if (live) { const bw = w * .12; rr(x + w - pad - bw - w * .03, ry + rowH * .22, bw, rowH * .3, rowH * .15); ctx.fillStyle = "rgba(16,185,129,.16)"; ctx.fill(); txt("Hozir", x + w - pad - bw / 2 - w * .03, ry + rowH * .37, { size: w * .026, weight: 700, color: "#047857", align: "center", base: "middle" }); }
+    ctx.restore();
+  });
+  return h;
+}
+
+function sceneTimetable(lt, d, t) {
+  const cw = P ? 820 : 680, cx0 = P ? (W - cw) / 2 : W - cw - 140;
+  const flipAt = d * .55;
+  if (!P) {
+    const lx = 150;
+    pill(lx, TOP + 20, "Dars jadvali", { fill: "rgba(59,130,246,.18)", color: "#93c5fd", size: 30, dot: C.blue2, h: 64 });
+    txt("Jadval doim", lx, TOP + 190, { size: 108, weight: 800, family: DISPLAY, alpha: an(lt, .1, .6) });
+    gradText("ko'z oldingizda", lx, TOP + 310, 108, "#60a5fa", "#34d399", { alpha: an(lt, .25, .6) });
+    ["Hozirgi va keyingi dars", "Toq / juft hafta", "Telegramga ulashish"].forEach((s, i) => {
+      const a = an(lt, 1.2 + i * .35, .5, E.back); ctx.save(); ctx.translate(lx, TOP + 400 + i * 86); ctx.scale(a, a);
+      pill(0, 0, s, { size: 32, h: 66, dot: [C.emerald, C.violet, C.sky][i], shadow: true }); ctx.restore();
+    });
+  } else {
+    pill((W - 330) / 2, TOP - 10, "Dars jadvali", { fill: "rgba(59,130,246,.18)", color: "#93c5fd", size: 34, dot: C.blue2, h: 70 });
+    txt("Jadval doim", W / 2, TOP + 190, { size: 118, weight: 800, family: DISPLAY, align: "center", alpha: an(lt, .1, .6) });
+    gradText("ko'z oldingizda", W / 2, TOP + 320, 118, "#60a5fa", "#34d399", { align: "center", alpha: an(lt, .25, .6) });
+  }
+  const cy0 = P ? TOP + 420 : TOP + 20;
+  const h = todayCard(cx0, cy0, cw, lt, flipAt);
+  // Telegram share chip
+  const sa = an(lt, d - 2.0, .5, E.back);
+  if (sa > 0) {
+    const bx = cx0 + cw * (P ? .5 : .56), by = cy0 + h - 4, fly = an(lt, d - .9, .8, E.in);
+    ctx.save(); ctx.translate(bx + fly * 320, by - fly * 260); ctx.scale(sa, sa); ctx.globalAlpha *= 1 - fly * .8;
+    const bw = P ? 470 : 400, bh = P ? 96 : 84; rr(-bw / 2, -bh / 2, bw, bh, bh / 2); ctx.fillStyle = C.sky; ctx.shadowColor = "rgba(34,158,217,.55)"; ctx.shadowBlur = 36; ctx.fill(); ctx.shadowColor = "transparent";
+    plane(-bw / 2 + 56, 0, 2.1); txt("Telegramga ulashish", -bw / 2 + 100, 0, { size: P ? 36 : 32, weight: 700, base: "middle" }); ctx.restore();
+  }
+}
+
+function sceneGpa(lt, d, t) {
+  const cw = P ? 880 : 700, cx0 = P ? (W - cw) / 2 : W - cw - 140, cy0 = P ? TOP + 400 : TOP + 20;
+  if (!P) {
+    const lx = 150;
+    pill(lx, TOP + 20, "GPA kalkulyator", { fill: "rgba(139,92,246,.2)", color: "#c4b5fd", size: 30, dot: C.violet, h: 64 });
+    txt("Maqsadga qanday", lx, TOP + 175, { size: 84, weight: 800, family: DISPLAY, alpha: an(lt, .1, .6) });
+    gradText("baho kerak?", lx, TOP + 280, 96, "#c4b5fd", "#f0abfc", { alpha: an(lt, .25, .6) });
+    txt("5 ballik va 4.0 shkala", lx, TOP + 350, { size: 36, weight: 500, color: "#94a3b8", alpha: an(lt, .9, .6) });
+  } else {
+    pill((W - 420) / 2, TOP - 10, "GPA kalkulyator", { fill: "rgba(139,92,246,.2)", color: "#c4b5fd", size: 34, dot: C.violet, h: 70 });
+    txt("Maqsadga qanday", W / 2, TOP + 180, { size: 100, weight: 800, family: DISPLAY, align: "center", alpha: an(lt, .1, .6) });
+    gradText("baho kerak?", W / 2, TOP + 300, 112, "#c4b5fd", "#f0abfc", { align: "center", alpha: an(lt, .25, .6) });
+  }
+  const pad = cw * .05, a0 = an(lt, .2, .6);
+  ctx.save(); ctx.globalAlpha *= a0; ctx.translate(0, (1 - a0) * 40);
+  const ch = cw * .86; card(cx0, cy0, cw, ch, { r: cw * .045 });
+  const k = an(lt, .6, 1.5, E.inOut), gpa = 4.71 * k;
+  ring(cx0 + pad + cw * .13, cy0 + pad + cw * .13, cw * .105, cw * .026, (gpa / 5), C.violet);
+  txt("UMUMIY GPA", cx0 + pad + cw * .3, cy0 + pad + cw * .07, { size: cw * .03, weight: 700, color: C.mute, ls: 2 });
+  txt(gpa.toFixed(2), cx0 + pad + cw * .3, cy0 + pad + cw * .2, { size: cw * .125, weight: 800, family: DISPLAY, color: C.ink });
+  txt("/ 5.0", cx0 + pad + cw * .3 + measure(gpa.toFixed(2), cw * .125, 800, DISPLAY) + 14, cy0 + pad + cw * .2, { size: cw * .045, weight: 600, color: C.mute });
+  const rows = [["Oliy matematika", "6 kredit", "92", "5", C.emerald], ["Fizika", "4 kredit", "78", "4", C.blue2], ["Ingliz tili", "4 kredit", "88", "5", C.emerald]];
+  rows.forEach((r, i) => {
+    const a = an(lt, 1.0 + i * .28, .5), ry = cy0 + pad * 1.2 + cw * .31 + i * cw * .15 + (1 - a) * 30, rh = cw * .125;
+    ctx.save(); ctx.globalAlpha *= a; rr(cx0 + pad, ry, cw - pad * 2, rh, cw * .03); ctx.fillStyle = C.soft; ctx.fill();
+    txt(r[0], cx0 + pad + cw * .035, ry + rh * .36, { size: cw * .04, weight: 700, color: C.ink, base: "middle" });
+    txt(r[1], cx0 + pad + cw * .035, ry + rh * .72, { size: cw * .029, weight: 500, color: C.mute, base: "middle" });
+    txt(r[2] + " ball", cx0 + cw - pad - cw * .25, ry + rh / 2, { size: cw * .035, weight: 600, color: C.mute, base: "middle", align: "right" });
+    const bx = cx0 + cw - pad - cw * .08; ctx.beginPath(); ctx.arc(bx, ry + rh / 2, cw * .04, 0, 7); ctx.fillStyle = r[4]; ctx.fill();
+    txt(r[3], bx, ry + rh / 2 + 1, { size: cw * .045, weight: 800, align: "center", base: "middle" }); ctx.restore();
+  });
+  ctx.restore();
+  // goal planner card — sits in the free left column on landscape, under the card on portrait
+  const ga = an(lt, d - 3.2, .6, E.back);
+  if (ga > 0) {
+    const gw = P ? cw : 780, gh = P ? cw * .3 : 215, gx = P ? cx0 : 150, gy = (P ? cy0 + ch + 36 : TOP + 420) + (1 - clamp(ga)) * 50;
+    ctx.save(); ctx.globalAlpha *= clamp(ga); card(gx, gy, gw, gh, { r: 36, fill: "#f5f3ff", stroke: "rgba(139,92,246,.4)", lw: 3 });
+    txt("Maqsad: 4.80", gx + gw * .06, gy + gh * .27, { size: gw * .06, weight: 800, family: DISPLAY, color: "#5b21b6", base: "middle" });
+    txt("Qolgan 40 kredit uchun o'rtacha", gx + gw * .06, gy + gh * .53, { size: gw * .043, weight: 500, color: C.mute, base: "middle" });
+    txt("4.83 baho kerak", gx + gw * .06, gy + gh * .78, { size: gw * .075, weight: 800, family: DISPLAY, color: C.violet, base: "middle" }); ctx.restore();
+  }
+}
+
+function sceneTools(lt, d, t) {
+  const gap = P ? 34 : 34, cw = P ? (W - 2 * 80 - gap) / 2 : (W - 2 * 120 - 3 * gap) / 4, chH = P ? 520 : 560;
+  const heading = "Kunlik asboblar";
+  if (!P) { gradText(heading, W / 2, TOP + 70, 84, "#fff", "#93c5fd", { align: "center", alpha: an(lt, 0, .5) }); }
+  else { gradText(heading, W / 2, TOP + 20, 96, "#fff", "#93c5fd", { align: "center", alpha: an(lt, 0, .5) }); }
+  const gridY = P ? TOP + 110 : TOP + 150, gridX = P ? 80 : 120;
+  const cell = (i) => P ? [gridX + (i % 2) * (cw + gap), gridY + Math.floor(i / 2) * (chH + gap)] : [gridX + i * (cw + gap), gridY];
+  const titles = [["Vazifalar", "#f59e0b"], ["Imtihon", C.rose], ["Fokus", "#22c55e"], ["Davomat", C.violet]];
+  titles.forEach(([name, col], i) => {
+    const [x, y0] = cell(i), a = an(lt, .3 + i * .22, .6, E.back), y = y0 + (1 - clamp(a)) * 60;
+    ctx.save(); ctx.globalAlpha *= clamp(a); card(x, y, cw, chH, { r: 36 });
+    ctx.beginPath(); ctx.arc(x + 54, y + 56, 20, 0, 7); ctx.fillStyle = col + "33"; ctx.fill(); ctx.beginPath(); ctx.arc(x + 54, y + 56, 8, 0, 7); ctx.fillStyle = col; ctx.fill();
+    txt(name, x + 90, y + 58, { size: 36, weight: 800, family: DISPLAY, color: C.ink, base: "middle" });
+    const lt2 = lt - (.3 + i * .22), cx = x + cw / 2;
+    if (i === 0) {
+      [["Fizika hisoboti", "Bugun"], ["Inglizcha esse", "Ertaga"], ["Dasturlash loyihasi", "5 kun"]].forEach((r, j) => {
+        const ry = y + 130 + j * 125, p = an(lt2, 1.0 + j * .55, .45);
+        check(x + 56, ry + 36, 24, p);
+        txt(r[0], x + 100, ry + 26, { size: 29, weight: 700, color: p > .6 ? "#94a3b8" : C.ink, base: "middle" });
+        if (p > .6) { ctx.fillStyle = "#94a3b8"; ctx.fillRect(x + 100, ry + 27, measure(r[0], 29, 700), 3); }
+        txt(r[1], x + 100, ry + 66, { size: 25, weight: 500, color: j === 0 && p < .6 ? C.rose : C.mute, base: "middle" });
+      });
+    } else if (i === 1) {
+      const n = Math.round(lerp(15, 12, an(lt2, .8, 1.6, E.inOut)));
+      ctx.beginPath(); ctx.arc(cx, y + 250, 112, 0, 7); ctx.fillStyle = "rgba(244,63,94,.1)"; ctx.fill();
+      txt(String(n), cx, y + 250, { size: 138, weight: 800, family: DISPLAY, color: C.rose, align: "center", base: "middle" });
+      txt("kun qoldi", cx, y + 392, { size: 36, weight: 700, color: C.mute, align: "center" });
+      txt("Fizika · Yakuniy", cx, y + 470, { size: 30, weight: 600, color: C.ink, align: "center" });
+    } else if (i === 2) {
+      const secs = Math.round(1500 - an(lt2, .6, 2.4, E.lin) * 48), mm = String(Math.floor(secs / 60)).padStart(2, "0"), ss = String(secs % 60).padStart(2, "0");
+      ring(cx, y + 255, cw * .31, 20, an(lt2, .6, 2.4, E.lin) * .06 + .02, "#22c55e");
+      txt(`${mm}:${ss}`, cx, y + 255, { size: 70, weight: 800, family: DISPLAY, color: C.ink, align: "center", base: "middle" });
+      txt("Diqqat", cx, y + 420, { size: 32, weight: 700, color: "#15803d", align: "center" });
+      txt("3 kun ketma-ket 🔥", cx, y + chH - 44, { size: 30, weight: 600, color: C.mute, align: "center" });
+    } else {
+      [["Iqtisodiyot", .25, C.emerald], ["Fizika", .68, C.amber], ["Tarix", 1, C.rose]].forEach((r, j) => {
+        const by = y + 150 + j * 125, p = an(lt2, .9 + j * .35, .9, E.out);
+        txt(r[0], x + 40, by, { size: 28, weight: 700, color: C.ink, base: "middle" }); txt(Math.round(r[1] * 100 * p) + "%", x + cw - 40, by, { size: 26, weight: 600, color: C.mute, align: "right", base: "middle" });
+        rr(x + 40, by + 28, cw - 80, 18, 9); ctx.fillStyle = C.soft; ctx.fill(); rr(x + 40, by + 28, Math.max(18, (cw - 80) * r[1] * p), 18, 9); ctx.fillStyle = r[2]; ctx.fill();
+      });
+      txt("Chegara nazoratda", x + cw / 2, y + chH - 40, { size: 26, weight: 600, color: C.mute, align: "center" });
+    }
+    ctx.restore();
+  });
+}
+
+function scenePlatform(lt, d, t) {
+  gradText("Hammasi bir joyda", W / 2, TOP + (P ? 40 : 70), P ? 100 : 84, "#fff", "#6ee7b7", { align: "center", alpha: an(lt, 0, .5) });
+  const tiles = [
+    ["👥", "Klublar", "Hamjamiyat", C.violet], ["💼", "Ish va amaliyot", "Part-time, stajirovka", C.emerald],
+    ["🎓", "Qabul va DTM", "Qo'llanmalar", C.blue2], ["🏠", "Turargoh", "Joylashish va ijara", C.amber],
+    ["💳", "Stipendiya", "To'lovlar va moliya", C.cyan], ["✨", "AI yordamchi", "24/7 savol-javob", null],
+  ];
+  const cols = P ? 2 : 3, gap = 30, tw = P ? (W - 2 * 80 - gap) / 2 : (W - 2 * 170 - 2 * gap) / 3, th = P ? 250 : 215;
+  const gx = P ? 80 : 170, gy = P ? TOP + 150 : TOP + 130;
+  tiles.forEach(([em, name, sub, col], i) => {
+    const x = gx + (i % cols) * (tw + gap), y0 = gy + Math.floor(i / cols) * (th + gap), a = an(lt, .25 + i * .16, .55, E.back), y = y0 + (1 - clamp(a)) * 40;
+    ctx.save(); ctx.globalAlpha *= clamp(a); ctx.translate(x + tw / 2, y + th / 2); ctx.scale(.9 + .1 * clamp(a), .9 + .1 * clamp(a)); ctx.translate(-tw / 2, -th / 2);
+    if (col) { card(0, 0, tw, th, { r: 36 }); ctx.beginPath(); ctx.arc(70, th / 2, 44, 0, 7); ctx.fillStyle = col + "22"; ctx.fill(); }
+    else { const g = ctx.createLinearGradient(0, 0, tw, th); g.addColorStop(0, "#2563eb"); g.addColorStop(1, "#8b5cf6"); card(0, 0, tw, th, { r: 36, fill: g, shadowColor: "rgba(99,102,241,.6)", blur: 60 }); }
+    txt(em, 70, th / 2 + 2, { size: 52, align: "center", base: "middle" });
+    txt(name, 138, th / 2 - 22, { size: P ? 38 : 36, weight: 800, family: DISPLAY, color: col ? C.ink : "#fff", base: "middle" });
+    txt(sub, 138, th / 2 + 28, { size: P ? 28 : 26, weight: 500, color: col ? C.mute : "rgba(255,255,255,.85)", base: "middle" });
+    ctx.restore();
+  });
+  // AI chat bubble
+  const ba = an(lt, d - 2.4, .5, E.back);
+  if (ba > 0) {
+    const bw = P ? 800 : 760, bx = P ? (W - bw) / 2 : W - 170 - bw + 60, by = (P ? BOT - 160 : 725) + (1 - ba) * 30, bh = 84;
+    ctx.save(); ctx.globalAlpha *= clamp(ba); rr(bx, by, bw, bh, 42); ctx.fillStyle = C.card; ctx.shadowColor = "rgba(2,8,30,.5)"; ctx.shadowBlur = 40; ctx.fill(); ctx.shadowColor = "transparent";
+    const full = "Grant statusimni qanday tekshiraman?", n = Math.floor(clamp((lt - (d - 2.2)) / 1.1) * full.length);
+    txt(full.slice(0, n) + (n < full.length ? "▍" : ""), bx + 36, by + bh / 2, { size: 30, weight: 600, color: C.ink, base: "middle" }); ctx.restore();
+  }
+}
+
+function sceneCta(lt, d, t) {
+  const cx = W / 2, cy = P ? 560 : 200;
+  glow(cx, cy + 120, 520, "rgba(59,130,246,.28)");
+  const k = an(lt, 0, .7, E.back); ctx.save(); ctx.translate(cx, cy); ctx.scale(k, k); logo(0, 0, P ? 120 : 85); ctx.restore();
+  const s = P ? 168 : 165, a = an(lt, .35, .6);
+  ctx.save(); ctx.translate(0, (1 - a) * 40); gradText("talaba.uz", cx, cy + (P ? 330 : 255), s, "#60a5fa", "#34d399", { align: "center", alpha: a }); ctx.restore();
+  const by = cy + (P ? 450 : 330), bw = P ? 640 : 580, bh = P ? 126 : 104, pulse = 1 + .035 * Math.sin(lt * 5), ba = an(lt, .9, .6, E.back);
+  ctx.save(); ctx.translate(cx, by + bh / 2); ctx.scale(pulse * clamp(ba), pulse * clamp(ba));
+  const g = ctx.createLinearGradient(-bw / 2, 0, bw / 2, 0); g.addColorStop(0, "#3b82f6"); g.addColorStop(1, "#2563eb");
+  rr(-bw / 2, -bh / 2, bw, bh, bh / 2); ctx.fillStyle = g; ctx.shadowColor = "rgba(37,99,235,.7)"; ctx.shadowBlur = 50; ctx.fill(); ctx.shadowColor = "transparent";
+  txt("Bepul boshlash  →", 0, 2, { size: P ? 52 : 50, weight: 800, family: DISPLAY, align: "center", base: "middle" }); ctx.restore();
+  const icons = ["📅", "🧮", "✅", "⏱️", "📍"];
+  icons.forEach((e, i) => { const a = an(lt, 1.7 + i * .12, .4, E.back); txt(e, cx + (i - 2) * (P ? 120 : 110), by + bh + (P ? 120 : 95), { size: P ? 62 : 56, align: "center", base: "middle", alpha: clamp(a) }); });
+}
+
+const SCENES = { hook: sceneHook, brand: sceneBrand, timetable: sceneTimetable, gpa: sceneGpa, tools: sceneTools, platform: scenePlatform, cta: sceneCta };
+
+// ── captions ────────────────────────────────────────────────────────
+function captions(t, T) {
+  const s = T.segs.find(s => t >= s.t0 - .05 && t <= s.t1 + .3); if (!s) return;
+  const a = E.out(clamp((t - s.t0 + .05) / .25)) * clamp((s.t1 + .3 - t) / .25);
+  const size = P ? 54 : 46, maxW = W * (P ? .84 : .66), lh = size * 1.32;
+  const lines = wrap(s.caption, maxW, size, 700);
+  const bw = Math.max(...lines.map(l => measure(l, size, 700))) + 72, bh = lines.length * lh + 40;
+  const yBottom = P ? H * .835 : H * .955, y0 = yBottom - bh + (1 - a) * 24;
+  ctx.save(); ctx.globalAlpha *= a;
+  rr(W / 2 - bw / 2, y0, bw, bh, 30); ctx.fillStyle = "rgba(5,10,24,.66)"; ctx.fill();
+  lines.forEach((l, i) => txt(l, W / 2, y0 + 20 + lh * (i + .5) + 2, { size, weight: 700, align: "center", base: "middle" }));
+  ctx.restore();
+}
+
+// ── timeline ────────────────────────────────────────────────────────
+const LEAD = P ? .5 : .7, GAP = P ? .3 : .35, TAIL = P ? 1.1 : 1.7;
+function buildTimeline(segs) {
+  let t = LEAD; const out = segs.map(s => { const o = { ...s, t0: t, t1: t + s.dur }; t += s.dur + GAP; return o; });
+  const scenes = out.map((s, i) => ({ name: s.scene, t0: i === 0 ? 0 : s.t0 - .3, t1: 0 }));
+  scenes.forEach((sc, i) => sc.t1 = i < scenes.length - 1 ? scenes[i + 1].t0 : out[out.length - 1].t1 + TAIL);
+  return { segs: out, scenes, total: scenes[scenes.length - 1].t1 };
+}
+function frame(t, T) {
+  ctx.clearRect(0, 0, W, H); bg(t);
+  const sc = T.scenes.find(s => t >= s.t0 && t < s.t1) || T.scenes[T.scenes.length - 1];
+  const lt = t - sc.t0, d = sc.t1 - sc.t0;
+  const aIn = E.out(clamp(lt / (sc.name === "brand" ? .12 : .4))), aOut = sc.name === "cta" ? clamp((T.total - t) / .9) : sc.name === "hook" ? 1 : E.inOut(clamp((d - lt) / .28));
+  ctx.save(); ctx.globalAlpha = aIn * aOut; SCENES[sc.name](lt, d, t); ctx.restore();
+  captions(t, T);
+}
+
+// ── audio: voice + synthesized music + sfx ──────────────────────────
+function noiseBuf(ac, secs = 1) { const b = ac.createBuffer(1, ac.sampleRate * secs, ac.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; }
+function scheduleMusic(ac, out, t0, total) {
+  const bpm = 98, beat = 60 / bpm, bar = beat * 4, f = n => 440 * Math.pow(2, (n - 69) / 12);
+  const prog = [[48, 52, 55, 60], [43, 47, 50, 55], [45, 48, 52, 57], [41, 45, 48, 53]];   // C – G – Am – F
+  const bus = ac.createGain(); bus.gain.setValueAtTime(0.0001, t0); bus.gain.exponentialRampToValueAtTime(.46, t0 + 1.6);
+  bus.gain.setValueAtTime(.46, t0 + total - 2.2); bus.gain.exponentialRampToValueAtTime(.0001, t0 + total - .1); bus.connect(out);
+  const lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2400; lp.connect(bus);
+  const dly = ac.createDelay(1); dly.delayTime.value = beat * .75; const fb = ac.createGain(); fb.gain.value = .32; const dg = ac.createGain(); dg.gain.value = .5;
+  dly.connect(fb); fb.connect(dly); dly.connect(dg); dg.connect(bus);
+  const env = (g, t, a, hold, r, peak) => { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.setValueAtTime(peak, t + a + hold); g.gain.exponentialRampToValueAtTime(.0001, t + a + hold + r); };
+  const nb = noiseBuf(ac, 1);
+  for (let b = 0, tt = t0; tt < t0 + total; b++, tt += bar) {
+    const ch = prog[b % 4];
+    ch.forEach(n => [-7, 7].forEach(det => { const o = ac.createOscillator(), g = ac.createGain(); o.type = "triangle"; o.frequency.value = f(n + 12); o.detune.value = det; env(g, tt, .5, bar - .4, .7, .028); o.connect(g); g.connect(lp); o.start(tt); o.stop(tt + bar + 1.4); }));
+    for (let k = 0; k < 8; k++) {            // plucked arpeggio, echoing
+      const tn = tt + k * beat / 2, n = ch[[0, 1, 2, 3, 2, 1, 3, 2][k]] + 24, o = ac.createOscillator(), g = ac.createGain(); o.type = "triangle"; o.frequency.value = f(n);
+      env(g, tn, .006, 0, .32, k % 2 ? .04 : .06); o.connect(g); g.connect(lp); g.connect(dly); o.start(tn); o.stop(tn + .5);
+    }
+    if (tt > t0 + bar) for (let k = 0; k < 4; k += 2) {      // soft sub kick + bass after the intro bar
+      const tn = tt + k * beat, o = ac.createOscillator(), g = ac.createGain(); o.type = "sine"; o.frequency.setValueAtTime(130, tn); o.frequency.exponentialRampToValueAtTime(46, tn + .16);
+      env(g, tn, .004, .05, .22, .22); o.connect(g); g.connect(bus); o.start(tn); o.stop(tn + .4);
+      const bo = ac.createOscillator(), bg2 = ac.createGain(); bo.type = "sine"; bo.frequency.value = f(ch[0] - 12); env(bg2, tn + beat * .5, .01, .2, .3, .09); bo.connect(bg2); bg2.connect(bus); bo.start(tn + beat * .5); bo.stop(tn + beat * 1.5);
+    }
+    if (tt > t0 + bar * 2) for (let k = 0; k < 8; k++) {      // hi-hat ticks
+      const tn = tt + k * beat / 2 + beat / 4, s = ac.createBufferSource(), g = ac.createGain(), hp = ac.createBiquadFilter(); s.buffer = nb; hp.type = "highpass"; hp.frequency.value = 7500;
+      env(g, tn, .002, .0, .05, k % 2 ? .02 : .035); s.connect(hp); hp.connect(g); g.connect(bus); s.start(tn, Math.random() * .5, .08);
+    }
+  }
+}
+function whoosh(ac, out, t, dur = .55, gain = .08) {
+  const s = ac.createBufferSource(); s.buffer = noiseBuf(ac, 1); const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 1.2;
+  bp.frequency.setValueAtTime(250, t); bp.frequency.exponentialRampToValueAtTime(3800, t + dur); const g = ac.createGain();
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + dur * .45); g.gain.exponentialRampToValueAtTime(.0001, t + dur); s.connect(bp); bp.connect(g); g.connect(out); s.start(t, 0, dur + .1);
+}
+function pop(ac, out, t, freq = 880, gain = .08) {
+  const o = ac.createOscillator(), g = ac.createGain(); o.type = "sine"; o.frequency.setValueAtTime(freq, t); o.frequency.exponentialRampToValueAtTime(freq * 1.6, t + .08);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + .22); o.connect(g); g.connect(out); o.start(t); o.stop(t + .3);
+}
+
+function scheduleAll(ac, master, start, voices) {
+  scheduleMusic(ac, master, start, T.total);
+  const vbus = ac.createGain(); vbus.gain.value = 1.55; vbus.connect(master);
+  voices.forEach((buf, i) => { const s = ac.createBufferSource(); s.buffer = buf; s.connect(vbus); s.start(start + T.segs[i].t0); });
+  T.scenes.forEach((sc, i) => { if (i > 0) whoosh(ac, master, start + sc.t0 - .05); });
+  const brand = T.scenes.find(s => s.name === "brand"); if (brand) pop(ac, master, start + brand.t0 + .45, 520, .12);
+  const tools = T.scenes.find(s => s.name === "tools"); if (tools) [0, 1, 2].forEach(j => pop(ac, master, start + tools.t0 + 1.9 + j * .55, 1100, .05));
+}
+
+// ── run / record ────────────────────────────────────────────────────
+let TL = null, T = null, VOICE = [];
+async function load() {
+  await Promise.all([document.fonts.load('800 100px "Plus Jakarta Sans"'), document.fonts.load('700 40px Inter'), document.fonts.load('600 40px Inter'), document.fonts.load('500 40px Inter')]);
+  TL = await (await fetch("timeline.json")).json(); T = buildTimeline(TL[KIND]);
+}
+async function decodeVoices(ac) {
+  VOICE = await Promise.all(T.segs.map(async s => ac.decodeAudioData(await (await fetch(s.file)).arrayBuffer())));
+}
+async function run(record) {
+  $status.textContent = "tayyorlanmoqda…";
+  const ac = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 }); await ac.resume(); await decodeVoices(ac);
+  const dest = ac.createMediaStreamDestination(), master = ac.createGain(); master.gain.value = 1; master.connect(dest); if (!record) master.connect(ac.destination);
+  const start = ac.currentTime + .3; // everything is scheduled on the audio clock
+  scheduleAll(ac, master, start, VOICE);
+
+  let rec = null, chunks = [];
+  if (record) {
+    const vs = cv.captureStream(30), stream = new MediaStream([...vs.getVideoTracks(), ...dest.stream.getAudioTracks()]);
+    const mime = ["video/mp4;codecs=avc1.640028,mp4a.40.2", "video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/mp4"].find(m => MediaRecorder.isTypeSupported(m));
+    rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: P ? 9e6 : 12e6, audioBitsPerSecond: 192e3 });
+    rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+    rec.start(1000); window.__mime = mime;
+  }
+  await new Promise(res => {
+    const tick = () => {
+      const t = ac.currentTime - start;
+      if (t >= T.total) return res();
+      frame(Math.max(0, t), T); $status.textContent = (record ? "yozilmoqda " : "") + t.toFixed(1) + " / " + T.total.toFixed(1) + " s";
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  frame(T.total - .01, T);
+  if (rec) {
+    await new Promise(r => { rec.onstop = r; setTimeout(() => rec.stop(), 400); });
+    const blob = new Blob(chunks, { type: window.__mime }); $status.textContent = "yuklanmoqda " + (blob.size / 1e6).toFixed(1) + " MB…";
+    const r = await fetch(`/save?name=talaba-${KIND === "ig" ? "instagram-9x16" : "youtube-16x9"}.mp4`, { method: "POST", body: blob });
+    $status.textContent = "SAVED " + (await r.text()) + " mime=" + window.__mime; window.__done = true;
+  } else $status.textContent = "tugadi";
+  setTimeout(() => ac.close(), 500);
+}
+const yieldNow = () => new Promise(r => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });
+async function renderOffline() {
+  const FPS = 30, SR = 48000, name = `talaba-${KIND === "ig" ? "instagram-9x16" : "youtube-16x9"}.mp4`;
+  const log = (m) => { $status.textContent = m; };
+  log("kutubxona yuklanmoqda…");
+  const { Muxer, ArrayBufferTarget } = await import("https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/build/mp4-muxer.mjs");
+
+  // — audio mix (offline, faster than real time) —
+  log("audio tayyorlanmoqda…");
+  const oac = new OfflineAudioContext(2, Math.ceil(T.total * SR), SR);
+  const voices = await Promise.all(T.segs.map(async s => oac.decodeAudioData(await (await fetch(s.file)).arrayBuffer())));
+  const comp = oac.createDynamicsCompressor(); comp.threshold.value = -12; comp.ratio.value = 3; comp.knee.value = 12; comp.connect(oac.destination);
+  const master = oac.createGain(); master.gain.value = 1; master.connect(comp);
+  scheduleAll(oac, master, 0, voices);
+  const mix = await oac.startRendering();
+
+  const aCfg = { codec: "mp4a.40.2", sampleRate: SR, numberOfChannels: 2, bitrate: 192000 };
+  const vCfg = { codec: "avc1.640032", width: W, height: H, bitrate: P ? 6e6 : 8e6, framerate: FPS, avc: { format: "avc" }, latencyMode: "quality" };
+  const [as, vs] = await Promise.all([AudioEncoder.isConfigSupported(aCfg), VideoEncoder.isConfigSupported(vCfg)]);
+  if (!as.supported || !vs.supported) throw new Error("kodlovchi qo'llab-quvvatlanmaydi: audio=" + as.supported + " video=" + vs.supported);
+
+  const target = new ArrayBufferTarget();
+  const muxer = new Muxer({ target, fastStart: "in-memory", video: { codec: "avc", width: W, height: H, frameRate: FPS }, audio: { codec: "aac", sampleRate: SR, numberOfChannels: 2 } });
+  let encErr = null;
+  const venc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: e => (encErr = e) }); venc.configure(vCfg);
+  const aenc = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: e => (encErr = e) }); aenc.configure(aCfg);
+
+  // — audio —
+  const L = mix.getChannelData(0), R = mix.getChannelData(1), CH = 4096;
+  for (let off = 0; off < L.length; off += CH) {
+    const n = Math.min(CH, L.length - off), buf = new Float32Array(n * 2); buf.set(L.subarray(off, off + n), 0); buf.set(R.subarray(off, off + n), n);
+    const ad = new AudioData({ format: "f32-planar", sampleRate: SR, numberOfFrames: n, numberOfChannels: 2, timestamp: Math.round(off / SR * 1e6), data: buf });
+    aenc.encode(ad); ad.close(); if (aenc.encodeQueueSize > 12) await yieldNow();
+  }
+
+  // — video: render each frame deterministically from its timestamp —
+  const N = Math.ceil(T.total * FPS), t0 = performance.now();
+  for (let i = 0; i < N; i++) {
+    frame(Math.min(i / FPS, T.total - .001), T);
+    const vf = new VideoFrame(cv, { timestamp: Math.round(i * 1e6 / FPS), duration: Math.round(1e6 / FPS) });
+    venc.encode(vf, { keyFrame: i % 60 === 0 }); vf.close();
+    while (venc.encodeQueueSize > 6) await yieldNow();
+    if (encErr) throw encErr;
+    if (i % 15 === 0) { log(`kadr ${i}/${N} (${Math.round((performance.now() - t0) / 1000)}s)`); await yieldNow(); }
+  }
+  await venc.flush(); await aenc.flush(); muxer.finalize();
+  if (encErr) throw encErr;
+  const blob = new Blob([target.buffer], { type: "video/mp4" }); log("yuklanmoqda " + (blob.size / 1e6).toFixed(1) + " MB…");
+  const r = await fetch(`/save?name=${name}`, { method: "POST", body: blob });
+  log("SAVED " + (await r.text()) + " frames=" + N + " dur=" + T.total.toFixed(2)); window.__done = true;
+}
+window.renderOffline = renderOffline;
+
+(async () => {
+  await load();
+  const at = Q.get("t");
+  if (at !== null) { frame(parseFloat(at), T); $status.textContent = `kadr t=${at} / ${T.total.toFixed(1)}s · ` + T.scenes.map(s => `${s.name}@${s.t0.toFixed(1)}`).join(" "); window.__total = T.total; }
+  else frame(0, T);
+  document.getElementById("play").onclick = () => run(false);
+  document.getElementById("rec").onclick = () => run(true);
+  document.getElementById("off").onclick = () => renderOffline().catch(e => { $status.textContent = "XATO: " + e; window.__err = String(e); });
+})();
+</script>
+</body>
+</html>
