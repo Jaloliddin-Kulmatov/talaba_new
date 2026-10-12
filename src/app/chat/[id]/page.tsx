@@ -11,8 +11,8 @@ import {
   AlertCircle, Trash2, ShieldCheck, CornerDownRight, X,
 } from "lucide-react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
+import { API_BASE as API } from "@/lib/config";
 interface Answer {
   id: number;
   post_id: number;

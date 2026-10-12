@@ -5,7 +5,7 @@ import AttendanceApp from "@/components/tools/attendance-app";
 export const metadata: Metadata = {
   title: "Davomat nazorati — qoldirilgan soatlar hisobi",
   description: "Har bir fan bo'yicha qoldirilgan soatlarni kuzating va imtihonga ruxsat chegarasiga qancha qolganini bilib turing.",
-  alternates: { canonical: "https://talaba.uz/tools/attendance" },
+  alternates: { canonical: "/tools/attendance" },
 };
 
 export default function Page() {

@@ -12,8 +12,8 @@ import { useAuth } from "@/lib/auth";
 import Link from "next/link";
 import PostFeed from "@/components/community/post-feed";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
+import { API_BASE as API } from "@/lib/config";
 interface Club {
   id: number; name: string; category: string; university: string;
   description: string; contact: string | null; telegram_link: string | null;

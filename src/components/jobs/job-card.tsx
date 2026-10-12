@@ -20,8 +20,8 @@ import { formatRelativeTime } from "@/lib/utils";
 import { Bookmarks } from "@/lib/bookmarks";
 import type { Job } from "@/types";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
+import { API_BASE as API } from "@/lib/config";
 // Strip the "db-" prefix from the list page so we can route to /jobs/<numeric id>
 const detailHref = (id: string) => `/jobs/${id.replace(/^db-/, "")}`;
 const dbId = (id: string) => id.replace(/^db-/, "");

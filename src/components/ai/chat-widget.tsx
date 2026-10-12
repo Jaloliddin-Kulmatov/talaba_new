@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Sparkles, X, Send, Minimize2, Bot, User, RefreshCw } from "lucide-react";
 
+import { API_BASE } from "@/lib/config";
 interface Message {
   id: string;
   role: "user" | "assistant";
@@ -16,7 +17,6 @@ const QUICK = [
   "IELTS ga qanday tayyorlanaman?",
 ];
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
 async function sendToAI(message: string, history: Message[]): Promise<string> {
   const token = typeof window !== "undefined" ? localStorage.getItem("talaba_token") : null;

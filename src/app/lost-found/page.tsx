@@ -5,7 +5,7 @@ import LostFoundApp from "@/components/community/lostfound-app";
 export const metadata: Metadata = {
   title: "Yo'qolgan va topilgan buyumlar",
   description: "Kampusda yo'qotgan yoki topgan buyumlaringiz haqida e'lon bering.",
-  alternates: { canonical: "https://talaba.uz/lost-found" },
+  alternates: { canonical: "/lost-found" },
 };
 
 export default function Page() {

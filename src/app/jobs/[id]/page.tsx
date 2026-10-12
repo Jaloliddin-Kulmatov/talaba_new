@@ -15,8 +15,8 @@ import { formatRelativeTime } from "@/lib/utils";
 import { Bookmarks } from "@/lib/bookmarks";
 import type { Job as JobType } from "@/types";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
+import { API_BASE as API } from "@/lib/config";
 const typeConfig: Record<string, { label: string; variant: "default" | "success" | "cyan" | "warning" | "violet" }> = {
   "part-time":  { label: "Qisman bandlik", variant: "default" },
   internship:   { label: "Amaliyot",       variant: "cyan"    },

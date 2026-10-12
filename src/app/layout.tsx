@@ -13,6 +13,7 @@ import PwaStatus from "@/components/pwa/pwa-status";
 import { AuthProvider } from "@/lib/auth";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
+import { SITE_URL } from "@/lib/config";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const display = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-display", weight: ["600", "700", "800"] });
 
@@ -38,9 +39,9 @@ export const metadata: Metadata = {
     "talabalar turargohi", "stipendiya", "harbiy hisob",
     "talabalar uchun ish", "amaliyot O'zbekiston", "IELTS TOEFL",
   ],
-  metadataBase: new URL("https://talaba.uz"),
+  metadataBase: new URL(SITE_URL),
   manifest: "/manifest.json",
-  alternates: { canonical: "https://talaba.uz" },
+  alternates: { canonical: SITE_URL },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -57,7 +58,7 @@ export const metadata: Metadata = {
     title: "TALABA — O'zbek talabalari uchun platforma",
     description: "Hamjamiyat, amaliyot, qabul va turargoh bo'yicha yordam, AI yordamchi — barchasi bir joyda.",
     type: "website",
-    url: "https://talaba.uz",
+    url: SITE_URL,
     siteName: "TALABA",
     locale: "uz_UZ",
     images: [{ url: "/og.png", width: 1200, height: 630, alt: "TALABA — O'zbek talabalari uchun platforma" }],
@@ -104,8 +105,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     "@type": "Organization",
     "name": "TALABA — O'zbek talabalari uchun platforma",
     "alternateName": "TALABA",
-    "url": "https://talaba.uz",
-    "logo": "https://talaba.uz/icon-512.png",
+    "url": SITE_URL,
+    "logo": `${SITE_URL}/icon-512.png`,
     "description": "TALABA — O'zbekistondagi talabalar uchun yetakchi platforma: universitet klublari, amaliyot, DTM/qabul, turargoh va AI yordamchi.",
     "foundingDate": "2026",
     "areaServed": "UZ",
@@ -119,7 +120,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     "contactPoint": {
       "@type": "ContactPoint",
       "contactType": "customer support",
-      "url": "https://talaba.uz/support"
+      "url": `${SITE_URL}/support`
     }
   };
 

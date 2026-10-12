@@ -6,8 +6,8 @@ import Navbar from "@/components/layout/navbar";
 import { Send, Loader2, Star, CheckCircle2, MessageSquarePlus, Sparkles, Bug, Heart } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
+import { API_BASE } from "@/lib/config";
 export default function FeedbackPage() {
   const { user } = useAuth();
   const [rating, setRating] = useState(0);

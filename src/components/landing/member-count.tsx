@@ -3,8 +3,8 @@
 import { useEffect, useState, useRef } from "react";
 import { Users } from "lucide-react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
+import { API_BASE as API } from "@/lib/config";
 export default function MemberCount() {
   const [target, setTarget] = useState<number | null>(null);
   const [display, setDisplay] = useState(0);

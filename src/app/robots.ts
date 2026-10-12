@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 
+import { SITE_URL } from "@/lib/config";
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
@@ -9,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/dashboard/", "/admin/", "/onboarding/", "/api/"],
       },
     ],
-    sitemap: "https://talaba.uz/sitemap.xml",
-    host: "https://talaba.uz",
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   };
 }

@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { Sparkles, Send, Bot, User, RefreshCw, Loader2 } from "lucide-react";
 
+import { API_BASE as API } from "@/lib/config";
 interface Message { id: string; role: "user" | "assistant"; content: string; }
 
 const QUICK = [
@@ -15,7 +16,6 @@ const QUICK = [
   "IELTS/TOEFL sertifikatini qayerdan olsam bo'ladi?",
 ];
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
 async function sendToAI(message: string, history: Message[]): Promise<string> {
   const token = localStorage.getItem("talaba_token");

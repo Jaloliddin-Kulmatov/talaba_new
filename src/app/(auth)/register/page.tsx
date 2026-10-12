@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { UNIVERSITIES, FUNDING_TYPES, REGIONS } from "@/lib/constants";
 import GoogleSignInButton, { GOOGLE_AUTH_ENABLED } from "@/components/auth/google-signin-button";
 
+import { API_BASE } from "@/lib/config";
 const steps = [
   { label: "Hisob", hint: "Kirish ma'lumotlaringiz" },
   { label: "Universitet", hint: "Qayerda o'qiysiz" },
@@ -62,8 +63,7 @@ export default function RegisterPage() {
     setEmailStatus("checking");
     setEmailMessage("");
     try {
-      const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
-      const res = await fetch(`${BASE}/auth/check-email?email=${encodeURIComponent(email)}`);
+      const res = await fetch(`${API_BASE}/auth/check-email?email=${encodeURIComponent(email)}`);
       const json = await res.json();
       if (!json.valid) {
         setEmailStatus("invalid");

@@ -38,7 +38,8 @@ There is no ESLint config in the repo. To lint with the standard rules:
 6. New synced data keys must be added in **both** `src/lib/store.ts` (`SYNC_KEYS`) and `backend/routes/sync.py` (`SYNC_KEYS`).
 7. Anything that deletes a user must be added to `delete_me` in `backend/routes/auth.py`.
 8. Backend targets Python 3.11 (`runtime.txt`); `requirements-render.txt` is stale — `requirements.txt` is the source of truth.
-9. The repo lives in iCloud Drive: `node_modules`/`.next` there sync slowly. Prefer building from a copy outside iCloud.
+9. API/site URLs come from `src/lib/config.ts` (`API_BASE`, `SITE_URL`) — see the deploy skill for the Vercel env vars (`BACKEND_URL` proxy vs `NEXT_PUBLIC_API_URL`).
+10. The repo lives in iCloud Drive: `node_modules`/`.next` there sync slowly. Prefer building from a copy outside iCloud.
 
 ## Skills (in `.claude/skills/`)
 `talaba-run-verify` · `talaba-add-tool` · `talaba-backend-feature` · `talaba-uzbek-copy` · `talaba-design-system` ·

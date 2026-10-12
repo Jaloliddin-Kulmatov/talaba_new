@@ -14,8 +14,8 @@ import {
   Globe2, GraduationCap,
 } from "lucide-react";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
+import { API_BASE as API } from "@/lib/config";
 interface ChatPost {
   id: number;
   user_id: number;

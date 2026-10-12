@@ -5,7 +5,7 @@ import MarketApp from "@/components/community/market-app";
 export const metadata: Metadata = {
   title: "Talaba bozori — kitob, konspekt va jihozlar",
   description: "Talabalar uchun e'lonlar: kitob, konspekt, elektronika va turargoh jihozlarini sotib oling yoki soting.",
-  alternates: { canonical: "https://talaba.uz/market" },
+  alternates: { canonical: "/market" },
 };
 
 export default function Page() {

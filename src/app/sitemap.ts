@@ -1,6 +1,7 @@
 import { MetadataRoute } from "next";
 
-const BASE = "https://talaba.uz";
+import { SITE_URL } from "@/lib/config";
+const BASE = SITE_URL;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

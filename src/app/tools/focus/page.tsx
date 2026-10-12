@@ -5,7 +5,7 @@ import FocusApp from "@/components/tools/focus-app";
 export const metadata: Metadata = {
   title: "Fokus taymer — Pomodoro va o'qish statistikasi",
   description: "Pomodoro taymer: diqqat va tanaffus bosqichlari, kunlik o'qish vaqti, haftalik statistika va ketma-ket kunlar.",
-  alternates: { canonical: "https://talaba.uz/tools/focus" },
+  alternates: { canonical: "/tools/focus" },
 };
 
 export default function Page() {

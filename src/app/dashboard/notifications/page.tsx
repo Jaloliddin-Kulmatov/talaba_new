@@ -9,8 +9,8 @@ import {
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
+import { API_BASE as API } from "@/lib/config";
 function getToken() {
   return typeof window !== "undefined" ? localStorage.getItem("talaba_token") : null;
 }

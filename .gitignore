@@ -41,3 +41,8 @@ promo/*.mp4
 
 # compiled test output
 .test-out/
+
+# ── Personal files / local tooling ───────────────────────────
+hwpx-out/
+.vercel/
+.env*.local

@@ -1,4 +1,6 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+import { API_BASE } from "@/lib/config";
+
+const BASE = API_BASE;
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;

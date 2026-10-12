@@ -35,11 +35,15 @@ def create_app():
     # expires_delta if a specific flow needs a different lifetime.
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=30)
 
-    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+    # FRONTEND_URL may list several origins, comma-separated (e.g. production + a Vercel preview alias).
+    allowed_origins = [o.strip().rstrip("/") for o in os.environ.get("FRONTEND_URL", "http://localhost:3000").split(",") if o.strip()]
 
     @app.after_request
     def add_cors_headers(response):
-        response.headers["Access-Control-Allow-Origin"] = frontend_url
+        origin = (request.headers.get("Origin") or "").rstrip("/")
+        # Echo the caller's origin only if it is on the list; otherwise fall back to the first one.
+        response.headers["Access-Control-Allow-Origin"] = origin if origin in allowed_origins else allowed_origins[0]
+        response.headers["Vary"] = "Origin"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
         response.headers["Access-Control-Allow-Credentials"] = "true"

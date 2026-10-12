@@ -5,7 +5,7 @@ import CvApp from "@/components/tools/cv-app";
 export const metadata: Metadata = {
   title: "CV yaratuvchi — o'zbek, ingliz va rus tilida",
   description: "Talabalar uchun bepul CV yaratuvchi: ATS-ga mos shablon, PDF sifatida saqlash, o'zbek/ingliz/rus tillari.",
-  alternates: { canonical: "https://talaba.uz/tools/cv" },
+  alternates: { canonical: "/tools/cv" },
 };
 
 export default function Page() {

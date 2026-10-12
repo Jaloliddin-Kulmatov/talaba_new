@@ -5,8 +5,8 @@ import { X, Loader2, CheckCircle2, Star } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { UNIVERSITIES, FUNDING_TYPES, REGIONS } from "@/lib/constants";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
+import { API_BASE as API } from "@/lib/config";
 interface Props { onClose: () => void; }
 
 export default function AmbassadorModal({ onClose }: Props) {

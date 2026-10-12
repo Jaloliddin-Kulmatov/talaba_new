@@ -5,7 +5,7 @@ import ReviewsApp from "@/components/community/reviews-app";
 export const metadata: Metadata = {
   title: "Fan sharhlari — o'qituvchi va fanlar haqida anonim fikrlar",
   description: "Universitet fanlari va o'qituvchilari haqida talabalarning anonim sharhlari: baho, qiyinlik darajasi va tavsiyalar.",
-  alternates: { canonical: "https://talaba.uz/reviews" },
+  alternates: { canonical: "/reviews" },
 };
 
 export default function Page() {

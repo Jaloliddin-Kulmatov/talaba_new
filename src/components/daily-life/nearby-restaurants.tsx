@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MapPin, Star, Loader2, Navigation, RefreshCw } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
+import { API_BASE } from "@/lib/config";
 type Restaurant = {
   name: string;
   type: string;
@@ -75,9 +76,8 @@ export default function NearbyRestaurants() {
 
   async function fetchRecommendations(cityName: string, region: string) {
     setState("loading");
-    const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
     const token = typeof window !== "undefined" ? localStorage.getItem("talaba_token") : null;
-    const res = await fetch(`${BASE}/ai/restaurants`, {
+    const res = await fetch(`${API_BASE}/ai/restaurants`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

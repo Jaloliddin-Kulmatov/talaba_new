@@ -17,12 +17,12 @@ import { EMPTY_TIMETABLE, TIMETABLE_KEY, weeklyClassHours } from "@/lib/toolkit/
 import { rankJobs, scoreJob } from "@/lib/toolkit/matching";
 import type { Job } from "@/types";
 
+import { API_BASE as API } from "@/lib/config";
 const ALERT_FIELDS = ["IT / Dasturlash", "Marketing", "Muhandislik", "Biznes / Boshqaruv", "Dizayn", "Moliya", "Tadqiqot", "Media / Kontent", "Savdo", "Barcha yo'nalishlar"];
 const ALERT_LOCATIONS = ["Toshkent", "Samarqand", "Farg'ona vodiysi", "Buxoro", "Boshqa viloyat", "Butun O'zbekiston"];
 
 const SCHEDULE_FILTERS = ["kunduzgi", "sirtqi", "kechki", "barchasi"];
 
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
 export default function JobsPage() {
   const { user } = useAuth();
