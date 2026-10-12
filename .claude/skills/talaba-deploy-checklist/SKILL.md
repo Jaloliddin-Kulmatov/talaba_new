@@ -6,7 +6,7 @@ description: Use before deploying Talaba or setting up a new environment — env
 # Deploy checklist
 
 ## Frontend (Next.js on Vercel)
-Import the repo in Vercel (framework Next.js is auto-detected; `vercel.json`, `engines.node` 20.x and `.env.example` are already in the repo). Then set env vars, **one backend mode**:
+Import the repo in Vercel (framework Next.js is auto-detected; `vercel.json`, `engines.node` 24.x and `.env.example` are already in the repo). Then set env vars, **one backend mode**:
 - **Proxy (recommended):** `BACKEND_URL=https://<backend-origin>` — the browser calls same-origin `/api/...` and `next.config.mjs` forwards it. No CORS, works on preview URLs. Leave `NEXT_PUBLIC_API_URL` unset.
 - **Direct:** `NEXT_PUBLIC_API_URL=https://<backend-origin>/api`, and put the site origin(s) in the backend's `FRONTEND_URL` (comma-separated list allowed).
 Optional: `NEXT_PUBLIC_SITE_URL` (canonical origin for sitemap/robots/OG, default `https://talaba.uz`), `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (add the site origin in the Google OAuth client).

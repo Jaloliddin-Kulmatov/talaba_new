@@ -20,7 +20,7 @@ Live domain: `talaba.uz`. Repo started as a fork of "ICOM" (a Korea-focused app)
 
 ## Commands
 ```bash
-npm ci && npm run dev            # needs Node 20 (.nvmrc)
+npm ci && npm run dev            # needs Node 24 (.nvmrc; Vercel dropped 20.x)
 npx tsc --noEmit                 # typecheck — must stay clean
 npm run test:logic               # toolkit + matching + service-worker tests (no extra deps)
 npm run build
