@@ -126,7 +126,7 @@ export const NAV_LINKS = [
   { href: "/community", label: "Hamjamiyat" },
   { href: "/jobs", label: "Ishlar" },
   { href: "/universities", label: "Universitetlar" },
-  { href: "/support", label: "Yordam" },
+  { href: "/support", label: "Hayot va yordam" },
 ];
 
 export const SUPPORT_CATEGORIES = [

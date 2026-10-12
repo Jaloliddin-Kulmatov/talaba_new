@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
+import LifeTabs from "@/components/layout/life-tabs";
 import {
   GraduationCap, Home, CreditCard, Shield, Train, BookOpen, Briefcase,
   ArrowRight, Sparkles, Clock, ThumbsUp, ChevronRight, ChevronDown,
@@ -141,7 +142,8 @@ export default function SupportPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pt-16">
+      <LifeTabs active="support" />
+      <main>
         {/* Hero — AI-first ask box */}
         <div className="relative bg-gradient-to-b from-blue-50 via-emerald-50/40 to-transparent dark:from-blue-950/30 dark:via-emerald-950/20 border-b border-border">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 py-14 text-center">

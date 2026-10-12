@@ -2,6 +2,7 @@ import React from "react";
 import Link from "next/link";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
+import LifeTabs from "@/components/layout/life-tabs";
 import NearbyPlaces from "@/components/daily-life/nearby-places";
 import {
   Train, ShoppingBag, Wifi,
@@ -66,7 +67,8 @@ export default function DailyLifePage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pt-16 pb-24 md:pb-0">
+      <LifeTabs active="daily-life" />
+      <main className="pb-24 md:pb-0">
 
         {/* Hero — compact */}
         <div className="border-b border-border bg-gradient-to-b from-blue-50 to-transparent dark:from-blue-950/15">

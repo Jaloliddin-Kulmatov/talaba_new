@@ -21,7 +21,7 @@ const footerLinks = {
     { label: "Klublar", href: "/community" },
     { label: "Ish va amaliyot", href: "/jobs" },
     { label: "Chat / Savol-javob", href: "/chat" },
-    { label: "Yordam qo'llanmalari", href: "/support" },
+    { label: "Hayot va yordam", href: "/support" },
     { label: "AI Yordamchi", href: "/dashboard/ai" },
   ],
   Kompaniya: [

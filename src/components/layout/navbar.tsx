@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Bell, Menu, X, Search, Sparkles,
   Users, Briefcase, Globe, MessageSquare,
-  LayoutDashboard, LogIn, Home, LogOut, ShieldCheck, LayoutGrid,
+  LayoutDashboard, LogIn, LogOut, ShieldCheck, LayoutGrid,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -25,8 +25,7 @@ const desktopNavLinks = [
   { href: "/chat", label: "Chat", icon: MessageSquare },
   { href: "/community", label: "Klublar", icon: Users },
   { href: "/jobs", label: "Ishlar", icon: Briefcase },
-  { href: "/daily-life", label: "Kundalik hayot", icon: Home },
-  { href: "/support", label: "Yordam", icon: Globe },
+  { href: "/support", label: "Hayot va yordam", icon: Globe, also: ["/daily-life"] },
 ];
 
 const mobileNavLinks = desktopNavLinks;
@@ -61,8 +60,8 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
     return () => window.removeEventListener("keydown", handleGlobalKey);
   }, [handleGlobalKey]);
 
-  const active = (href: string) =>
-    pathname === href || (href !== "/" && pathname.startsWith(href));
+  const active = (href: string, also: string[] = []) =>
+    [href, ...also].some((h) => pathname === h || (h !== "/" && pathname.startsWith(h)));
 
   return (
     <>
@@ -99,13 +98,13 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
 
           {/* Desktop nav */}
           <nav aria-label="Asosiy menyu" className="hidden md:flex items-center gap-0.5">
-            {desktopNavLinks.map(({ href, label, icon: Icon }) => (
+            {desktopNavLinks.map(({ href, label, icon: Icon, ...rest }) => (
               <Link
                 key={href}
                 href={href}
                 className={cn(
                   "flex items-center gap-1.5 px-2.5 xl:px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
-                  active(href)
+                  active(href, "also" in rest ? rest.also : [])
                     ? "text-blue-600 bg-blue-500/10 dark:text-blue-400 dark:bg-blue-500/10"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
@@ -208,13 +207,13 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
         <>
           <div className="fixed inset-0 z-40 md:hidden bg-background/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <div className="fixed top-16 inset-x-0 z-40 md:hidden bg-background border-b border-border p-4 space-y-1 shadow-lg animate-slide-up">
-            {mobileNavLinks.map(({ href, label, icon: Icon }) => (
+            {mobileNavLinks.map(({ href, label, icon: Icon, ...rest }) => (
               <Link
                 key={href}
                 href={href}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors",
-                  active(href)
+                  active(href, "also" in rest ? rest.also : [])
                     ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
