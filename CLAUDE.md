@@ -8,6 +8,7 @@ Live domain: `talaba.uz`. Repo started as a fork of "ICOM" (a Korea-focused app)
 - `src/lib/toolkit/` **pure, tested logic** for the local-first tools (timetable, GPA, planner, focus, attendance, skills, CV, job matching).
 - `src/lib/store.ts` localStorage store (`useLocalStore`) + backup/restore; `src/lib/sync.ts` account sync.
 - `backend/` Flask: `models.py`, `routes/*.py` (blueprints registered in `app.py` under `/api/...`), `reminders.py` + `push_service.py` (Web Push), `tests/`.
+- `mobile/` Expo (SDK 58) phone app — own `package.json`, see `mobile/README.md`; shares `src/lib/toolkit`, `events.ts`, `guide-topics.ts` as `@shared/...`. Typecheck: `cd mobile && npx tsc --noEmit`.
 - `public/sw.js` service worker (offline + push). `public/manifest.json` PWA. `promo/` promo videos.
 
 ## How the product works

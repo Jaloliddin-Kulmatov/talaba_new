@@ -30,7 +30,7 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: t.bg },
         tabBarIcon: ({ focused, color, size }) => {
           const [on, off] = ICONS[route.name] ?? ICONS.index;
-          return <Ionicons name={focused ? on : off} size={size} color={color} />;
+          return <Ionicons name={focused ? on : off} size={size} color={color as string} />;
         },
       })}
     >

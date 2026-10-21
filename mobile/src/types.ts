@@ -10,6 +10,8 @@ export interface Job {
   description: string | null; requirements: string[]; schedule_compatible: string[]; deadline: string | null;
   tags: string[]; apply_link: string; student_friendly: string; student_friendly_note: string;
   apply_count: number; is_active: boolean; created_at: string; isNew: boolean;
+  /** filled by normalizeJob(); used by the shared job-matching module */
+  studentFriendly?: string;
 }
 
 export interface Club {

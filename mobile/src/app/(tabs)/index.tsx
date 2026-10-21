@@ -15,6 +15,7 @@ import { EMPTY_SKILLS, SKILLS_KEY } from "@shared/toolkit/skills";
 import { scoreJob } from "@shared/toolkit/matching";
 import type { Job, NewsItem } from "@/types";
 import { JobRow } from "@/components/job-row";
+import { normalizeJob } from "@/lib/jobs";
 
 export default function Home() {
   const t = useTheme();
@@ -34,9 +35,9 @@ export default function Home() {
       api.get<{ events: ClubEvent[] }>("/clubs/events/upcoming"),
       api.get<{ items: NewsItem[] }>("/news?limit=1"),
     ]);
-    if (j.data) setJobs(j.data.jobs);
-    if (e.data) setEvents(e.data.events.slice(0, 3));
-    if (n.data) setNews(n.data.items[0] ?? null);
+    if (j.data?.jobs) setJobs(j.data.jobs.map(normalizeJob));
+    if (e.data?.events) setEvents(e.data.events.slice(0, 3));
+    if (n.data?.items) setNews(n.data.items[0] ?? null);
   }, []);
   useEffect(() => { load(); }, [load, user?.id]);
 
