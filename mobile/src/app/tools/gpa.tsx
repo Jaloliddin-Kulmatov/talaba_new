@@ -33,9 +33,9 @@ export default function Gpa() {
       <Chips options={[{ id: "uz5", label: "5 ballik" }, { id: "us4", label: "4.0 shkala" }]} value={mode} onChange={(m) => save({ ...data, mode: m })} />
       {mode === "uz5" && <Chips options={[{ id: "points", label: "Ball (0–100)" }, { id: "grade", label: "Baho (2–5)" }]} value={data.uz5Input} onChange={(i) => save({ ...data, uz5Input: i })} />}
 
-      <Card style={{ alignItems: "center", gap: 2 }}>
+      <Card style={{ alignItems: "center", gap: 8, paddingVertical: 20 }}>
         <Txt variant="caption" tone="subtle">Umumiy GPA</Txt>
-        <Txt style={{ fontSize: 44, fontWeight: "800" }} tone="primary">{fmtGpa(stats.gpa)}</Txt>
+        <Txt style={{ fontSize: 44, lineHeight: 56, paddingTop: 6, fontWeight: "800" }} tone="primary">{fmtGpa(stats.gpa)}</Txt>
         <Txt variant="small" tone="muted">{stats.count} ta fan · {stats.credits} kredit · {stats.earned} kredit o'tilgan</Txt>
       </Card>
 
