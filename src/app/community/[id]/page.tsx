@@ -7,9 +7,10 @@ import Link from "next/link";
 import {
   ArrowLeft, Users, MessageSquare, Info, Globe, MapPin, Clock,
   Phone, Link as LinkIcon, Send, Loader2, CornerUpLeft, X, Lock,
-  ExternalLink, CheckCircle2, Crown, Settings,
+  ExternalLink, CheckCircle2, Crown, Settings, CalendarDays,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import ClubEvents from "@/components/community/club-events";
 import { formatRelativeTime } from "@/lib/utils";
 
 import { API_BASE as API } from "@/lib/config";
@@ -283,7 +284,7 @@ export default function CommunityDetailPage() {
   const [club, setClub] = useState<Club | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [pageError, setPageError] = useState("");
-  const [tab, setTab] = useState<"chat" | "members" | "about">("chat");
+  const [tab, setTab] = useState<"chat" | "events" | "members" | "about">("chat");
   const [joining, setJoining] = useState(false);
   const [showManage, setShowManage] = useState(false);
 
@@ -572,6 +573,7 @@ export default function CommunityDetailPage() {
             {(
               [
                 { key: "chat",    icon: MessageSquare, label: "Chat" },
+                { key: "events",  icon: CalendarDays,  label: "Tadbirlar" },
                 { key: "members", icon: Users,         label: `A'zolar (${club.member_count})` },
                 { key: "about",   icon: Info,          label: "Ma'lumot" },
               ] as const
@@ -819,6 +821,8 @@ export default function CommunityDetailPage() {
           {/* ══════════════════════════════
                MEMBERS TAB
           ══════════════════════════════ */}
+          {tab === "events" && <ClubEvents clubId={club.id} canManage={club.is_creator || user?.role === "admin"} />}
+
           {tab === "members" && (
             <div>
               {!isApproved ? (

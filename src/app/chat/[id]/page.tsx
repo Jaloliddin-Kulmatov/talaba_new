@@ -6,9 +6,12 @@ import Link from "next/link";
 import Navbar from "@/components/layout/navbar";
 import { useAuth } from "@/lib/auth";
 import { formatRelativeTime } from "@/lib/utils";
+import { relatedGuide } from "@/lib/guide-topics";
+import { ReportBox } from "@/components/community/ui";
+import { api } from "@/lib/api";
 import {
   ArrowLeft, Loader2, MessageSquare, Send,
-  AlertCircle, Trash2, ShieldCheck, CornerDownRight, X,
+  AlertCircle, Trash2, ShieldCheck, CornerDownRight, X, CheckCircle2, Mail, BookOpen,
 } from "lucide-react";
 
 
@@ -34,6 +37,8 @@ interface PostDetail {
   content: string;
   image_url: string;
   answer_count: number;
+  accepted_answer_id: number | null;
+  solved: boolean;
   answers: Answer[];
   created_at: string;
 }
@@ -103,6 +108,17 @@ export default function ChatDetailPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const toggleAccept = async (answerId: number) => {
+    const r = await api.post<{ accepted_answer_id: number | null; solved: boolean }>(`/chat/posts/${id}/accept/${answerId}`, {});
+    if (r.data) setPost((p) => (p ? { ...p, accepted_answer_id: r.data!.accepted_answer_id, solved: r.data!.solved } : p));
+  };
+
+  const reportAnswer = async (answerId: number, reason: string): Promise<string> => {
+    const r = await api.post<{ message: string; hidden?: boolean }>(`/chat/answers/${answerId}/report`, { reason });
+    if (r.data?.hidden) setPost((p) => (p ? { ...p, answers: p.answers.filter((a) => a.id !== answerId) } : p));
+    return r.error || r.data?.message || "Yuborildi.";
   };
 
   const startReply = (answer: Answer) => {
@@ -196,6 +212,11 @@ export default function ChatDetailPage() {
                   <span>· {formatRelativeTime(post.created_at)}</span>
                 </div>
                 <h1 className="text-xl font-bold text-foreground leading-snug">{post.title}</h1>
+                {post.solved && (
+                  <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                    <CheckCircle2 size={12} /> Hal qilindi
+                  </span>
+                )}
               </div>
             </div>
 
@@ -211,6 +232,15 @@ export default function ChatDetailPage() {
                 className="w-full max-h-96 object-contain rounded-xl border border-border bg-muted"
               />
             )}
+
+            {(() => {
+              const g = relatedGuide(`${post.title} ${post.content}`);
+              return g ? (
+                <Link href={g.href} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-blue-500/25 bg-blue-500/5 px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-500/10 dark:text-blue-300">
+                  <BookOpen size={13} /> Foydali qo&apos;llanma: {g.label}
+                </Link>
+              ) : null;
+            })()}
           </div>
 
           {/* Answers header */}
@@ -229,7 +259,7 @@ export default function ChatDetailPage() {
           ) : (
             <div className="space-y-3">
               {post.answers.map((a) => (
-                <div key={a.id} className="p-4 sm:p-5 rounded-2xl border border-border bg-card">
+                <div key={a.id} className={`p-4 sm:p-5 rounded-2xl border bg-card ${post.accepted_answer_id === a.id ? "border-emerald-500/50 ring-1 ring-emerald-500/20" : "border-border"}`}>
                   <div className="flex items-start gap-3">
                     <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
                       {a.author_name[0]?.toUpperCase() || "?"}
@@ -241,19 +271,45 @@ export default function ChatDetailPage() {
                         {a.author_region && <span>· {a.author_region}</span>}
                         <span>· {formatRelativeTime(a.created_at)}</span>
                       </div>
+                      {post.accepted_answer_id === a.id && (
+                        <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                          <CheckCircle2 size={12} /> Eng yaxshi javob
+                        </span>
+                      )}
                       <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
                         {a.content}
                       </p>
 
                       {/* Reply button — show for all signed-in users except the answer author */}
                       {user && (
-                        <button
-                          onClick={() => startReply(a)}
-                          className="mt-2 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-blue-500 transition-colors"
-                        >
-                          <CornerDownRight size={11} />
-                          Javob berish
-                        </button>
+                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                          <button
+                            onClick={() => startReply(a)}
+                            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-blue-500 transition-colors"
+                          >
+                            <CornerDownRight size={11} />
+                            Javob berish
+                          </button>
+                          {user.id === post.user_id && (
+                            <button
+                              onClick={() => toggleAccept(a.id)}
+                              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-emerald-600 transition-colors"
+                            >
+                              <CheckCircle2 size={11} />
+                              {post.accepted_answer_id === a.id ? "Tanlovni bekor qilish" : "Eng yaxshi javob deb belgilash"}
+                            </button>
+                          )}
+                          {user.id !== a.user_id && (
+                            <Link
+                              href={`/dashboard/messages?with=${a.user_id}`}
+                              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-blue-500 transition-colors"
+                            >
+                              <Mail size={11} />
+                              Xabar yozish
+                            </Link>
+                          )}
+                          {user.id !== a.user_id && <ReportBox onSend={(reason) => reportAnswer(a.id, reason)} />}
+                        </div>
                       )}
                     </div>
                     {user?.id === a.user_id && (

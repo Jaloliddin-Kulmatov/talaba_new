@@ -1,25 +1,13 @@
+import { Suspense } from "react";
 import DashboardLayout from "@/components/layout/dashboard-layout";
-import { MessageSquare } from "lucide-react";
+import MessagesApp from "@/components/messages/messages-app";
 
 export default function MessagesPage() {
   return (
     <DashboardLayout>
-      <div className="max-w-xl">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center">
-            <MessageSquare size={20} className="text-muted-foreground" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Xabarlar</h1>
-            <p className="text-xs text-muted-foreground">Boshqa talabalar bilan shaxsiy yozishmalar</p>
-          </div>
-        </div>
-        <div className="p-12 rounded-2xl border border-white/8 bg-white/3 text-center">
-          <MessageSquare size={32} className="text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Xabarlar tez orada.</p>
-          <p className="text-xs text-muted-foreground mt-1">Boshqa talabalar bilan bevosita bog&apos;laning — tez kunda ishga tushadi.</p>
-        </div>
-      </div>
+      <Suspense fallback={null}>
+        <MessagesApp />
+      </Suspense>
     </DashboardLayout>
   );
 }

@@ -16,6 +16,7 @@ import {
   type CvData, type CvLang, type CvTemplate,
 } from "@/lib/toolkit/cv";
 import { Field, Panel, Segmented, Skeleton, ToolHeader, fieldCls } from "./ui";
+import CvUploadCard from "./cv-upload-card";
 
 type Tab = "edit" | "preview";
 
@@ -51,6 +52,8 @@ export default function CvApp() {
         tool={tool}
         actions={<Button onClick={() => window.print()} disabled={!cv.fullName.trim()}><Printer size={15} className="mr-2" /> PDF sifatida saqlash</Button>}
       />
+
+      {user && <CvUploadCard />}
 
       {!hydrated ? (
         <div className="space-y-3"><Skeleton className="h-24" /><Skeleton className="h-96" /></div>

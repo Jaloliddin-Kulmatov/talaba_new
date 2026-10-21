@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import TodayOverview from "@/components/dashboard/today-overview";
+import CommunityStrip from "@/components/dashboard/community-strip";
 
 import { API_BASE as API } from "@/lib/config";
 function getToken() {
@@ -146,6 +147,7 @@ export default function DashboardPage() {
       </div>
 
       <TodayOverview />
+      <CommunityStrip />
 
       {/* ── My Clubs & Communities + TALABA AI (side by side on desktop) ── */}
       <div className="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-4">

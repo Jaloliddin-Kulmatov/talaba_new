@@ -1,15 +1,16 @@
 import Link from "next/link";
-import { BookOpen, Home } from "lucide-react";
+import { BookOpen, Home, Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
   { id: "support", href: "/support", label: "Qo'llanmalar", icon: BookOpen },
   { id: "daily-life", href: "/daily-life", label: "Kundalik hayot", icon: Home },
+  { id: "news", href: "/news", label: "Yangiliklar", icon: Newspaper },
 ] as const;
 
 /**
- * "Hayot va yordam" is one section in the main menu. Its two halves — step-by-step guides (/support)
- * and everyday life (/daily-life) — switch through this tab strip, shown at the top of both pages.
+ * "Hayot va yordam" is one section in the main menu. Its parts — step-by-step guides (/support),
+ * everyday life (/daily-life) and news (/news) — switch through this tab strip, shown at the top of each page.
  */
 export default function LifeTabs({ active }: { active: (typeof TABS)[number]["id"] }) {
   return (

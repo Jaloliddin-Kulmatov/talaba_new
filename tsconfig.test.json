@@ -19,6 +19,8 @@
     "src/lib/toolkit/attendance.ts",
     "src/lib/toolkit/skills.ts",
     "src/lib/toolkit/matching.ts",
+    "src/lib/guide-topics.ts",
+    "src/lib/events.ts",
     "next-env.d.ts"
   ],
   "exclude": [

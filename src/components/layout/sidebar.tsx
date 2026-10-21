@@ -23,6 +23,7 @@ import {
   LogOut,
   ShieldCheck,
   LayoutGrid,
+  Newspaper,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -63,7 +64,8 @@ const sidebarSections: { label: string; links: SidebarLink[] }[] = [
   {
     label: "Manbalar",
     links: [
-      { href: "/support", icon: Globe, label: "Talaba hayoti" },
+      { href: "/support", icon: Globe, label: "Hayot va yordam" },
+      { href: "/news", icon: Newspaper, label: "Yangiliklar" },
       { href: "/support/qabul", icon: FileText, label: "Qabul va DTM" },
       { href: "/support/faq", icon: HelpCircle, label: "Ko'p so'raladigan savollar" },
     ],

@@ -12,6 +12,7 @@ import {
   MessageSquare, Plus, ImageIcon, X, Loader2, Sparkles,
   AlertCircle, ShieldCheck, ArrowRight, Search, MapPin,
   Globe2, GraduationCap,
+  CheckCircle2,
 } from "lucide-react";
 
 
@@ -29,6 +30,7 @@ interface ChatPost {
   // only inside that university's chat, never in the global feed.
   scope: string;
   answer_count: number;
+  solved?: boolean;
   created_at: string;
 }
 
@@ -81,6 +83,7 @@ export default function ChatPage() {
   // from students at the user's university (e.g. "NUU Chat"). Defaults to
   // "all" when the user has no university or isn't signed in.
   const [tab, setTab] = useState<"all" | "uni">("all");
+  const [unansweredOnly, setUnansweredOnly] = useState(false);
 
   const loadPosts = useCallback(async () => {
     setLoading(true);
@@ -161,9 +164,10 @@ export default function ChatPage() {
   const tabFilteredPosts = tab === "uni" && myRegion ? uniPosts : globalPosts;
 
   const visiblePosts = useMemo(() => {
+    const pool = unansweredOnly ? tabFilteredPosts.filter(p => p.answer_count === 0) : tabFilteredPosts;
     const base = !search
-      ? tabFilteredPosts
-      : tabFilteredPosts.filter(p =>
+      ? pool
+      : pool.filter(p =>
           p.title.toLowerCase().includes(search.toLowerCase()) ||
           p.content.toLowerCase().includes(search.toLowerCase())
         );
@@ -183,7 +187,7 @@ export default function ChatPage() {
       );
 
     return [...latest, ...rest];
-  }, [tabFilteredPosts, search]);
+  }, [tabFilteredPosts, search, unansweredOnly]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -246,7 +250,24 @@ export default function ChatPage() {
               </div>
             )}
 
-            <div className="mt-6 flex gap-3 flex-col sm:flex-row">
+            <div className="mt-5 flex items-center gap-2">
+              <button
+                aria-pressed={!unansweredOnly}
+                onClick={() => setUnansweredOnly(false)}
+                className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${!unansweredOnly ? "border-blue-600 bg-blue-600 text-white" : "border-border text-muted-foreground hover:bg-accent"}`}
+              >
+                Hammasi
+              </button>
+              <button
+                aria-pressed={unansweredOnly}
+                onClick={() => setUnansweredOnly(true)}
+                className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${unansweredOnly ? "border-blue-600 bg-blue-600 text-white" : "border-border text-muted-foreground hover:bg-accent"}`}
+              >
+                Javobsiz
+              </button>
+            </div>
+
+            <div className="mt-4 flex gap-3 flex-col sm:flex-row">
               <div className="relative flex-1">
                 <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -322,6 +343,11 @@ export default function ChatPage() {
                       )}
                     </div>
                     <h2 className="text-sm font-bold text-foreground leading-snug mb-1">
+                      {p.solved && (
+                        <span className="mr-2 inline-flex items-center gap-1 align-middle rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+                          <CheckCircle2 size={10} /> Hal qilindi
+                        </span>
+                      )}
                       {p.title}
                     </h2>
                     <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-2">

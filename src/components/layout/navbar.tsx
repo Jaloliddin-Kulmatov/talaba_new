@@ -25,7 +25,7 @@ const desktopNavLinks = [
   { href: "/chat", label: "Chat", icon: MessageSquare },
   { href: "/community", label: "Klublar", icon: Users },
   { href: "/jobs", label: "Ishlar", icon: Briefcase },
-  { href: "/support", label: "Hayot va yordam", icon: Globe, also: ["/daily-life"] },
+  { href: "/support", label: "Hayot va yordam", icon: Globe, also: ["/daily-life", "/news"] },
 ];
 
 const mobileNavLinks = desktopNavLinks;

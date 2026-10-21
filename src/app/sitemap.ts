@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/universities`,      lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
     { url: `${BASE}/daily-life`,        lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
     { url: `${BASE}/support`,           lastModified: now, changeFrequency: "weekly",  priority: 0.8 },
+    { url: `${BASE}/news`,             lastModified: now, changeFrequency: "daily",   priority: 0.7 },
     { url: `${BASE}/tools`,             lastModified: now, changeFrequency: "weekly",  priority: 0.9 },
     { url: `${BASE}/tools/timetable`,   lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/tools/gpa`,         lastModified: now, changeFrequency: "monthly", priority: 0.8 },
