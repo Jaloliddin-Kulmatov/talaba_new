@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <title>TALABA</title>
+  <defs>
+    <linearGradient id="bg" x1="6" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="55%" stop-color="#0891b2"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <radialGradient id="shine" cx="34%" cy="24%" r="60%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="url(#bg)"/>
+  <circle cx="32" cy="32" r="30" fill="url(#shine)"/>
+  <!-- mortarboard -->
+  <path d="M32 17.5 55 28.5 32 39.5 9 28.5Z" fill="#fff"/>
+  <path d="M19.5 34.2v8.3c0 3.3 5.6 6.2 12.5 6.2s12.5-2.9 12.5-6.2v-8.3L32 40.6Z" fill="#fff" fill-opacity=".88"/>
+  <path d="M50.5 30.7v11" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="50.5" cy="44.2" r="2.4" fill="#fff"/>
+</svg>
