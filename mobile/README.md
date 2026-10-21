@@ -1,6 +1,6 @@
 # TALABA phone app (iOS and Android)
 
-Expo SDK 58 + Expo Router, TypeScript, Uzbek (Latin) UI. It talks to the same Flask backend as the website
+Expo SDK 57 + Expo Router, TypeScript, Uzbek (Latin) UI. It talks to the same Flask backend as the website
 and reuses the website's dependency-free logic (`../src/lib/toolkit`, `events.ts`, `guide-topics.ts`) as `@shared/...`.
 
 ## Run
