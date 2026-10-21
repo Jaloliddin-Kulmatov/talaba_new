@@ -12,6 +12,7 @@ export interface Job {
   apply_count: number; is_active: boolean; created_at: string; isNew: boolean;
   /** filled by normalizeJob(); used by the shared job-matching module */
   studentFriendly?: string;
+  days_left: number | null; closing_soon: boolean; expired: boolean;
 }
 
 export interface Club {

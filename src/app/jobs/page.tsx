@@ -24,6 +24,19 @@ const ALERT_LOCATIONS = ["Toshkent", "Samarqand", "Farg'ona vodiysi", "Buxoro", 
 const SCHEDULE_FILTERS = ["kunduzgi", "sirtqi", "kechki", "barchasi"];
 
 
+import { deadlineRank } from "@/lib/deadline";
+
+/** Category chips ("Qisman bandlik", "Amaliyot", …) → the job types the backend stores. */
+const CATEGORY_TYPE: Record<string, string> = {
+  "Qisman bandlik": "part-time", "Amaliyot": "internship", "Tadqiqot": "research", "Masofaviy": "remote", "To'liq stavka": "full-time",
+};
+function jobMatchesCategory(job: Job, category: string): boolean {
+  if (category === "Barchasi") return true;
+  if (category === "O'qituvchilik") return /(o'qituvchi|ustoz|repetitor|tutor|teacher|mentor|преподават|репетитор|учител)/i.test(`${job.title} ${(job.tags || []).join(" ")}`);
+  if (category === "Masofaviy") return job.type === "remote" || /onlayn|remote|masofaviy/i.test(job.location || "");
+  return job.type === CATEGORY_TYPE[category];
+}
+
 export default function JobsPage() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
@@ -32,7 +45,7 @@ export default function JobsPage() {
   const [regionFilter, setRegionFilter] = useState(false);
   const [allJobs, setAllJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<"new" | "match" | "applied">("new");
+  const [sortBy, setSortBy] = useState<"new" | "match" | "applied" | "deadline">("new");
   const [skillsData] = useLocalStore(SKILLS_KEY, EMPTY_SKILLS);
   const [timetable] = useLocalStore(TIMETABLE_KEY, EMPTY_TIMETABLE);
   const [alertsEnabled, setAlertsEnabled] = useState(false);
@@ -66,13 +79,13 @@ export default function JobsPage() {
           const mapped: Job[] = d.jobs.map((j: {
             id: string; title: string; company: string; location: string; type: string;
             salary: string; description: string; requirements: string[]; schedule_compatible: string[];
-            deadline: string; tags: string[]; isNew: boolean; apply_link: string;
+            deadline: string; tags: string[]; isNew: boolean; apply_link: string; job_type?: string;
             created_at?: string;
             student_friendly?: string; student_friendly_note?: string;
             apply_count?: number;
           }) => ({
             id: `db-${j.id}`, title: j.title, company: j.company, location: j.location || "",
-            type: "internship" as Job["type"], salary: j.salary || "", description: j.description || "",
+            type: ((["internship", "part-time", "remote", "full-time", "research"].includes(j.type) ? j.type : "internship") as Job["type"]), salary: j.salary || "", description: j.description || "",
             requirements: j.requirements, scheduleCompatible: j.schedule_compatible,
             // Use the real creation timestamp from the DB so "Posted X ago"
             // shows the actual age instead of "just now" every render.
@@ -173,7 +186,7 @@ export default function JobsPage() {
 
   const filteredJobs = useMemo(() => allJobs.filter((job) => {
     const matchSearch = !search || job.title.toLowerCase().includes(search.toLowerCase()) || job.company.toLowerCase().includes(search.toLowerCase());
-    const matchCategory = activeCategory === "Barchasi" || job.type.toLowerCase().replace("-", " ") === activeCategory.toLowerCase() || (activeCategory === "Masofaviy" && job.location.includes("Onlayn"));
+    const matchCategory = jobMatchesCategory(job, activeCategory);
     const matchSchedule = scheduleFilter.length === 0 || scheduleFilter.some((v) => job.scheduleCompatible.includes(v));
 
     // Region filter: when on, keep only jobs whose location string contains
@@ -198,6 +211,7 @@ export default function JobsPage() {
   }, [matchOn, filteredJobs, skillsData.skills, classHours]);
   const shownJobs = useMemo(() => {
     if (sortBy === "match") return rankJobs(filteredJobs, skillsData.skills, { classHoursPerWeek: classHours }).map((r) => r.job);
+    if (sortBy === "deadline") return [...filteredJobs].sort((a, b) => deadlineRank(a.deadline) - deadlineRank(b.deadline));
     if (sortBy === "applied") return [...filteredJobs].sort((a, b) => (b.applyCount ?? b.applications ?? 0) - (a.applyCount ?? a.applications ?? 0));
     return filteredJobs;
   }, [sortBy, filteredJobs, skillsData.skills, classHours]);
@@ -382,13 +396,14 @@ export default function JobsPage() {
                 </p>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as "new" | "match" | "applied")}
+                  onChange={(e) => setSortBy(e.target.value as "new" | "match" | "applied" | "deadline")}
                   aria-label="Saralash"
                   className="text-xs bg-muted/50 border border-border rounded-lg px-3 py-1.5 text-muted-foreground focus:outline-none focus:border-blue-500/50"
                 >
                   <option value="new">Eng so&apos;nggi</option>
                   <option value="match">Menga mos</option>
                   <option value="applied">Ko&apos;p ariza berilgan</option>
+                  <option value="deadline">Muddati yaqin</option>
                 </select>
               </div>
 

@@ -1,5 +1,6 @@
 from app import db
 from datetime import datetime, date as date_type
+from deadlines import days_left as _days_left, normalize_deadline as _norm_deadline
 
 
 class User(db.Model):
@@ -299,8 +300,18 @@ class Job(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_by = db.Column(db.Integer, db.ForeignKey("users.id"))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # Scraper bookkeeping. source: "hh" for scraped rows, "" for admin-entered / seeded ones.
+    # deadline_source: where `deadline` came from — "listing" (the site's own expiry), "text" (found in the
+    # description) or "admin". closed_* explain why a scraped row was hidden; last_checked_at is the last
+    # time the nightly check looked at the original posting.
+    source = db.Column(db.String(20), default="")
+    deadline_source = db.Column(db.String(12), default="")
+    closed_reason = db.Column(db.String(40), default="")
+    closed_at = db.Column(db.DateTime)
+    last_checked_at = db.Column(db.DateTime)
 
     def to_dict(self):
+        left = _days_left(self.deadline)
         return {
             "id": self.id,
             "title": self.title,
@@ -311,7 +322,10 @@ class Job(db.Model):
             "description": self.description,
             "requirements": [r.strip() for r in (self.requirements or "").split("\n") if r.strip()],
             "schedule_compatible": [v.strip() for v in (self.schedule_compatible or "").split(",") if v.strip()],
-            "deadline": self.deadline,
+            "deadline": _norm_deadline(self.deadline),
+            "days_left": left,                                  # None = rolling / free-text deadline
+            "closing_soon": left is not None and 0 <= left <= 5,
+            "expired": left is not None and left < 0,
             "tags": [t.strip() for t in (self.tags or "").split(",") if t.strip()],
             "apply_link": self.apply_link or "",
             "student_friendly": self.student_friendly or "",

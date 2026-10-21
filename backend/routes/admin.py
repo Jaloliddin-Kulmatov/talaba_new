@@ -184,6 +184,8 @@ def delete_club(club_id):
 
 # ── Jobs ─────────────────────────────────────────────────────────────────────
 
+from deadlines import normalize_deadline as _norm_deadline
+
 SCRAPER_SECRET = os.environ.get("SCRAPER_SECRET", "")
 
 # Last scrape result, shared across requests so the admin panel can poll for an
@@ -259,6 +261,54 @@ def scrape_now():
         return jsonify({"error": f"Could not start scraper: {e}"}), 500
 
 
+@admin_bp.route("/jobs/verify", methods=["POST"])
+@jwt_required()
+def verify_jobs_now():
+    """Re-check live scraped postings against hh.uz right now (hides closed ones, refreshes deadlines). Admin only."""
+    user, err = _require_admin()
+    if err:
+        return err
+    from flask import current_app
+    import threading
+    flask_app = current_app._get_current_object()
+
+    def _work():
+        from scrapers.hh_uz import verify_active_jobs
+        _set_scrape(state="running", kind="verify", started_at=_dt.utcnow().isoformat() + "Z")
+        try:
+            summary = verify_active_jobs(flask_app)
+            _set_scrape(state="done", kind="verify", finished_at=_dt.utcnow().isoformat() + "Z", summary=summary)
+        except Exception as e:
+            _set_scrape(state="error", kind="verify", finished_at=_dt.utcnow().isoformat() + "Z", error=str(e))
+
+    threading.Thread(target=_work, daemon=True, name="hh-uz-verify").start()
+    return jsonify({"message": "Tekshiruv boshlandi. /jobs/scrape-status orqali natijani kuzating.", "state": "running"}), 202
+
+
+@admin_bp.route("/jobs/health", methods=["GET"])
+@jwt_required()
+def jobs_health():
+    """At-a-glance state of the job board: how many are live, closing soon, hidden and why. Admin only."""
+    user, err = _require_admin()
+    if err:
+        return err
+    from collections import Counter
+    from deadlines import days_left
+    live = Job.query.filter_by(is_active=True).all()
+    left = [days_left(j.deadline) for j in live]
+    closed = Counter((j.closed_reason or "noma'lum") for j in Job.query.filter_by(is_active=False).all())
+    return jsonify({
+        "active": len(live),
+        "scraped": sum(1 for j in live if j.source == "hh"),
+        "rolling": sum(1 for d in left if d is None),
+        "closing_within_5_days": sum(1 for d in left if d is not None and 0 <= d <= 5),
+        "closing_within_14_days": sum(1 for d in left if d is not None and 0 <= d <= 14),
+        "hidden_by_reason": dict(closed),
+        "never_checked": sum(1 for j in live if j.source == "hh" and not j.last_checked_at),
+        "last_run": dict(_LAST_SCRAPE),
+    }), 200
+
+
 @admin_bp.route("/jobs/reset", methods=["POST"])
 @jwt_required()
 def reset_jobs():
@@ -317,8 +367,12 @@ def fix_job_deadlines():
     try:
         cleared = 0
         scanned = 0
+        from deadlines import normalize_deadline
         for job in Job.query.filter_by(is_active=True).all():
             scanned += 1
+            normalized = normalize_deadline(job.deadline)      # "20.11.2026" / "20 noyabr 2026" -> ISO
+            if normalized != (job.deadline or "").strip():
+                job.deadline = normalized
             raw = (job.deadline or "").strip()
             if len(raw) < 10:
                 continue
@@ -419,7 +473,7 @@ def bulk_ingest_jobs():
             description=(d.get("description") or "").strip(),
             requirements=(d.get("requirements") or "").strip(),
             schedule_compatible=(d.get("schedule_compatible") or "barchasi").strip(),
-            deadline=(d.get("deadline") or "").strip(),
+            deadline=_norm_deadline(d.get("deadline")),
             tags=(d.get("tags") or "").strip(),
             apply_link=link,
         )
@@ -460,7 +514,8 @@ def create_job():
         description=(data.get("description") or "").strip(),
         requirements=(data.get("requirements") or "").strip(),
         schedule_compatible=(data.get("schedule_compatible") or "barchasi").strip(),
-        deadline=(data.get("deadline") or "").strip(),
+        deadline=_norm_deadline(data.get("deadline")),
+        deadline_source="admin" if (data.get("deadline") or "").strip() else "",
         tags=(data.get("tags") or "").strip(),
         apply_link=(data.get("apply_link") or "").strip(),
         created_by=user.id,
@@ -495,7 +550,9 @@ def edit_job(job_id):
     if "description"    in data: job.description    = (data["description"]    or "").strip()
     if "requirements"   in data: job.requirements   = (data["requirements"]   or "").strip()
     if "schedule_compatible" in data: job.schedule_compatible = (data["schedule_compatible"] or "").strip()
-    if "deadline"       in data: job.deadline       = (data["deadline"]       or "").strip()
+    if "deadline"       in data:
+        job.deadline = _norm_deadline(data["deadline"])
+        job.deadline_source = "admin" if job.deadline else ""
     if "tags"           in data: job.tags           = (data["tags"]           or "").strip()
     if "apply_link"     in data: job.apply_link     = (data["apply_link"]     or "").strip()
 
@@ -888,7 +945,7 @@ def seed_talaba_jobs():
             description=(d.get("description") or "").strip(),
             requirements=(d.get("requirements") or "").strip(),
             schedule_compatible=(d.get("schedule_compatible") or "barchasi").strip(),
-            deadline=(d.get("deadline") or "").strip(),
+            deadline=_norm_deadline(d.get("deadline")),
             tags=(d.get("tags") or "").strip(),
             apply_link=link,
             student_friendly=(d.get("student_friendly") or "").strip(),

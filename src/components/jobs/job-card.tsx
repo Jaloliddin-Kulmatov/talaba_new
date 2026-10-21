@@ -50,6 +50,8 @@ interface JobCardProps {
   featured?: boolean;
 }
 
+import { deadlineInfo } from "@/lib/deadline";
+
 const UZ_MONTHS = ["yan", "fev", "mar", "apr", "may", "iyun", "iyul", "avg", "sen", "okt", "noy", "dek"];
 
 // Format an ISO deadline ("2026-08-15") into "15-avg, 2026". Non-ISO free
@@ -196,19 +198,15 @@ export default function JobCard({ job, featured = false, match }: JobCardProps) 
       {/* Footer */}
       <div className="flex items-center justify-between">
         {(() => {
-          const dl = formatDeadline(job.deadline);
-          // A real date is urgency-worthy (amber); a rolling listing is calmer
-          // (muted) but we still show *something* so every card has a clear
-          // deadline status instead of a blank space.
-          return dl ? (
-            <div className="flex items-center gap-1 text-xs text-amber-500 dark:text-amber-400">
-              <Zap size={11} />
-              <span>Muddat: {dl}</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Clock size={11} />
-              <span>Doimiy — istalgan vaqtda ariza bering</span>
+          // Soon / today → red, a real date further away → amber, rolling or free text → calm grey.
+          const dl = deadlineInfo(job.deadline);
+          const urgent = dl.tone === "soon" || dl.tone === "today" || dl.tone === "expired";
+          const cls = urgent ? "text-red-700 dark:text-red-400 font-semibold" : dl.tone === "ok" ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground";
+          const Icon = dl.tone === "ok" || urgent ? Zap : Clock;
+          return (
+            <div className={`flex items-center gap-1 text-xs ${cls}`}>
+              <Icon size={11} />
+              <span>{dl.label}</span>
             </div>
           );
         })()}

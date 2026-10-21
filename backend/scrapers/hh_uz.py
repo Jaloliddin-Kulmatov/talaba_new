@@ -1,57 +1,54 @@
 """
-hh.uz (HeadHunter Uzbekistan) internship/part-time job scraper.
+hh.uz (HeadHunter Uzbekistan) job scraper for students: internships, part-time and entry-level work.
 
-Pulls the latest Uzbekistan listings off hh.ru's public API scoped to area=97
-(Uzbekistan), normalises each posting into our Job model, deduplicates against
-existing apply_link values, and inserts up to MAX_PER_RUN new rows per run.
+What it does on every run
+  1. SEARCH   five searches (employer-flagged internships, "intern" in the title, part-time, student/junior
+              titles, remote entry-level) — see PLANS in hh_sources.py.
+  2. SCORE    every posting gets a student-fit score (internship flag, "no experience", flexible schedule,
+              seniority / years-of-experience penalties). Postings a student cannot take are dropped
+              before any expensive work happens.
+  3. DEADLINE the real deadline: the listing's own expiry date, or an explicit date found in the text
+              ("до 25 ноября", "deadline Oct 30", "25 noyabrgacha"), whichever is earlier.
+  4. CLEAN    duplicates (same employer + same role reposted) are skipped; Russian text is translated to
+              Uzbek (Latin) only when it actually contains Cyrillic.
+  5. VERIFY   `verify_active_jobs` (nightly) re-opens each live posting: closed / archived / removed rows are
+              hidden with a reason, deadlines are refreshed; `purge_closed` deletes rows closed for 90+ days.
 
-KNOWN RISK: a manual test of `GET api.hh.ru/vacancies?area=97` from a cloud
-sandbox returned HTTP 403 {"errors":[{"type":"forbidden"}]} even with a
-compliant HH-User-Agent header, while `GET api.hh.ru/areas/97` (metadata,
-confirms area=97 IS Uzbekistan) succeeded — this points to an anti-bot block
-on the vacancies endpoint specifically for some source IPs (a known hh.ru
-pattern for datacenter/cloud IP ranges), not a broken query or missing auth.
-This module is built to run correctly once connectivity is confirmed (e.g.
-from the actual deploy host), but MUST NOT be assumed to work until verified
-live. Until then, `backend/talaba_jobs.py` (seeded at boot in app.py) keeps
-the Jobs page populated regardless of scraper connectivity.
+Where the data comes from (see hh_sources.py): the official API with an OAuth token (HH_UZ_TOKEN), or — only
+when you opt in with HH_UZ_ALLOW_HTML=1 — the public hh.uz pages. Anonymous API access is refused by hh (403).
 
-Run modes:
-  - Scheduled: APScheduler fires `run_scraper(app)` twice a day (06:00 / 18:00 UTC)
-  - Manual: POST /api/admin/jobs/scrape-now triggers it in a background thread
-
-Environment variables (all optional):
-  HH_UZ_QUERY       — search keyword (default: "стажировка" — "internship" in Russian,
-                       hh.uz listings are predominantly Russian-language)
-  HH_UZ_LIMIT       — max listings to pull from the list endpoint (default: 40)
-  MAX_PER_RUN       — cap on inserts per run (default: 15)
-  DISABLE_SCHEDULER — set to "1" to skip background scheduling (still allows manual run)
+Environment variables (all optional)
+  HH_UZ_TOKEN        OAuth application token for api.hh.ru
+  HH_UZ_ALLOW_HTML   "1" to read the public hh.uz pages when there is no token
+  HH_UZ_PAGES        result pages per search (default 2, 50 per page)
+  MAX_PER_RUN        cap on inserts per run (default 25)
+  HH_UZ_MAX_DETAILS  cap on detail-page requests per run (default 60)
+  HH_UZ_MIN_FIT      minimum student-fit score to keep a posting (default 4)
+  HH_UZ_TRANSLATE_MODEL / GROQ_API_KEY   translation (falls back to free Google Translate)
+  DISABLE_SCHEDULER  "1" skips background scheduling (manual runs still work)
 """
 
 from __future__ import annotations
 
 import json
 import os
+import re
 import time
 import traceback
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Callable, Optional
 
 import requests
 
-LIST_URL   = "https://api.hh.ru/vacancies"
-DETAIL_URL = "https://api.hh.ru/vacancies/{id}"
+from deadlines import earliest, extract_deadline, is_expired, parse_iso
+from . import hh_sources as S
 
-# hh.ru's API asks integrators to identify their app in the User-Agent
-# (contact info included) rather than spoofing a browser string.
-HEADERS = {
-    "User-Agent": "talaba-app/1.0 (talaba.uz job board; contact: admin@talaba.uz)",
-    "Accept": "application/json",
-    "Accept-Language": "ru-RU,ru;q=0.9,uz;q=0.8,en;q=0.5",
-}
+# Used by the translation fallback below.
+HEADERS = {"User-Agent": "talaba-app/1.0 (talaba.uz job board; contact: admin@talaba.uz)"}
 
-AREA_UZBEKISTAN = 97
+DUPLICATE_WINDOW_DAYS = 21
+PURGE_AFTER_DAYS = 90
 
-# Tunables ---------------------------------------------------------------------
 
 def _env_int(name: str, default: int) -> int:
     try:
@@ -60,164 +57,67 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
-def _query() -> str:
-    return os.environ.get("HH_UZ_QUERY", "стажировка")
-
-
-def _limit() -> int:
-    return _env_int("HH_UZ_LIMIT", 40)
+def _clean_text(value) -> str:
+    return "" if value is None else str(value).strip()
 
 
 def _max_per_run() -> int:
-    return _env_int("MAX_PER_RUN", 15)
+    return _env_int("MAX_PER_RUN", 25)
 
 
-# HTTP helpers ----------------------------------------------------------------
-
-def _fetch_list() -> list[dict]:
-    """Fetch the list page; return the raw items array (may be empty on error)."""
-    params = {
-        "area": AREA_UZBEKISTAN,
-        "text": _query(),
-        "per_page": _limit(),
-        "order_by": "publication_time",
-    }
-    try:
-        res = requests.get(LIST_URL, params=params, headers=HEADERS, timeout=15)
-        res.raise_for_status()
-        payload = res.json()
-    except Exception as e:
-        print(f"[hh_uz] list fetch failed: {e}")
-        return []
-
-    if isinstance(payload, dict):
-        items = payload.get("items")
-        if isinstance(items, list):
-            return items
-        return []
-    if isinstance(payload, list):
-        return payload
-    return []
+def _max_details() -> int:
+    return _env_int("HH_UZ_MAX_DETAILS", 60)
 
 
-def _fetch_detail(vacancy_id) -> Optional[dict]:
-    try:
-        url = DETAIL_URL.format(id=vacancy_id)
-        res = requests.get(url, headers=HEADERS, timeout=15)
-        res.raise_for_status()
-        return res.json()
-    except Exception as e:
-        print(f"[hh_uz] detail fetch failed for id={vacancy_id}: {e}")
-        return None
+def _min_fit() -> int:
+    return _env_int("HH_UZ_MIN_FIT", 4)
 
 
-# Parsing ---------------------------------------------------------------------
+# Turning a posting into a Job row ---------------------------------------------
 
-def _clean_text(value) -> str:
-    if value is None:
-        return ""
-    return str(value).strip()
+_REQ_HEAD = re.compile(r"^\s*(требовани\w*|мы ожидаем|ожидаем от вас|что нужно|requirements?|qualifications?|we expect|you have|talablar)\s*:?\s*$", re.I)
+_OTHER_HEAD = re.compile(r"^\s*(обязанност\w*|задачи|условия|мы предлагаем|что мы предлагаем|responsibilit\w+|we offer|benefits|what you.ll do|vazifalar|shartlar|biz taklif)\s*:?\s*$", re.I)
 
 
-def _strip_html(value: str) -> str:
-    """hh.ru descriptions come as basic HTML (<p>, <ul>/<li>, <highlighttext>).
-    Strip tags for our plain-text description/requirements fields."""
-    import re
-    text = re.sub(r"<[^>]+>", "", value or "")
-    text = text.replace("&nbsp;", " ").replace("&amp;", "&").replace("&quot;", '"')
-    return text.strip()
+def requirements_from(description: str) -> str:
+    """The "requirements" section of a listing's text (bullet lines), or "" when it has no such section."""
+    lines, out, on = (description or "").splitlines(), [], False
+    for ln in lines:
+        if _REQ_HEAD.match(ln):
+            on = True
+            continue
+        if on and _OTHER_HEAD.match(ln):
+            break
+        if on and ln.strip():
+            out.append(ln.strip())
+        if on and len(out) >= 12:
+            break
+    return "\n".join(out)
 
 
-# Schedule-compatibility mapping — hh.ru's schedule/employment enums mapped
-# onto our student-relevant "kunduzgi | sirtqi | kechki | barchasi" axis.
-# hh.ru schedule.id values: fullDay, shift, flexible, remote, flyInFlyOut
-# hh.ru employment.id values: full, part, project, volunteer, probation
-_FLEXIBLE_SCHEDULE_IDS = {"flexible", "remote", "shift"}
-_PART_TIME_EMPLOYMENT_IDS = {"part", "project", "volunteer"}
+def _has_cyrillic(*parts: str) -> bool:
+    return any("Ѐ" <= ch <= "ӿ" for part in parts for ch in (part or ""))
 
 
-def _schedule_compatible(schedule_id: str, employment_id: str) -> str:
-    if schedule_id in _FLEXIBLE_SCHEDULE_IDS or employment_id in _PART_TIME_EMPLOYMENT_IDS:
-        return "kunduzgi, sirtqi, kechki"  # flexible enough for any study schedule
-    if schedule_id == "fullDay" and employment_id == "full":
-        return "sirtqi"  # rigid full-day — realistically only sirtqi (correspondence) students can take it
-    return "barchasi"
-
-
-def _parse_job(detail: dict) -> Optional[dict]:
-    """Map an hh.ru vacancy detail payload onto our Job columns. Returns None
-    if the posting doesn't look usable (e.g. no title or no id)."""
-    if not isinstance(detail, dict):
-        return None
-
-    vacancy_id = detail.get("id")
-    if not vacancy_id:
-        return None
-
-    title = _clean_text(detail.get("name"))
-    if not title:
-        return None
-
-    employer = detail.get("employer") or {}
-    company = _clean_text(employer.get("name") if isinstance(employer, dict) else employer)
-
-    area = detail.get("area") or {}
-    location = _clean_text(area.get("name") if isinstance(area, dict) else area)
-
-    description = _strip_html(_clean_text(detail.get("description")))
-
-    snippet = detail.get("snippet") or {}
-    requirements = _strip_html(_clean_text(
-        snippet.get("requirement") if isinstance(snippet, dict) else ""
-    ))
-    if not requirements:
-        # Detail endpoint sometimes only has the full description with
-        # requirements folded in — leave requirements empty rather than
-        # duplicating the whole description.
-        requirements = ""
-
-    key_skills = detail.get("key_skills") or []
-    tag_keywords: list[str] = []
-    if isinstance(key_skills, list):
-        for skill in key_skills:
-            name = _clean_text(skill.get("name") if isinstance(skill, dict) else skill)
-            if name and name not in tag_keywords:
-                tag_keywords.append(name)
-    tags = ", ".join(tag_keywords)
-
-    schedule_obj = detail.get("schedule") or {}
-    employment_obj = detail.get("employment") or {}
-    schedule_id = schedule_obj.get("id") if isinstance(schedule_obj, dict) else ""
-    employment_id = employment_obj.get("id") if isinstance(employment_obj, dict) else ""
-    schedule_compatible = _schedule_compatible(schedule_id or "", employment_id or "")
-
-    salary = ""
-    salary_obj = detail.get("salary") or {}
-    if isinstance(salary_obj, dict) and (salary_obj.get("from") or salary_obj.get("to")):
-        currency = salary_obj.get("currency") or "UZS"
-        s_from, s_to = salary_obj.get("from"), salary_obj.get("to")
-        if s_from and s_to:
-            salary = f"{s_from:,}–{s_to:,} {currency}"
-        elif s_from:
-            salary = f"{s_from:,}+ {currency}"
-        elif s_to:
-            salary = f"up to {s_to:,} {currency}"
-
-    apply_link = _clean_text(detail.get("alternate_url")) or f"https://hh.uz/vacancy/{vacancy_id}"
-
+def to_row(posting: dict, kind: str, deadline: str, deadline_source: str) -> dict:
+    desc = posting.get("description", "")
     return {
-        "title": title[:200],
-        "company": company[:150] or "hh.uz",
-        "location": location[:150],
-        "job_type": "internship" if "стажир" in _query().lower() else "part-time",
-        "salary": salary[:100],
-        "description": description,
-        "requirements": requirements,
-        "schedule_compatible": schedule_compatible,
-        "deadline": "",  # hh.ru vacancies are rolling by default; no fixed deadline field
-        "tags": tags[:300],
-        "apply_link": apply_link[:500],
+        "title": posting["title"][:200], "company": (posting.get("company") or "hh.uz")[:150],
+        "location": posting.get("location", "")[:150], "job_type": kind, "salary": posting.get("salary", "")[:100],
+        "description": desc[:6000], "requirements": requirements_from(desc)[:3000],
+        "schedule_compatible": S.schedule_labels(posting), "deadline": deadline, "deadline_source": deadline_source,
+        "tags": ", ".join(posting.get("key_skills", []))[:300], "apply_link": posting["url"][:500],
     }
+
+
+def decide_deadline(posting: dict, today) -> tuple[str, str]:
+    """(iso deadline or "", source). The earlier of the listing's own expiry and a date written in its text."""
+    listing = (posting.get("valid_to") or "")[:10]
+    text = extract_deadline(posting.get("description", ""), today)
+    best = earliest(listing, text)
+    if not best:
+        return "", ""
+    return best, ("text" if text and text == best and text != listing else "listing")
 
 
 # Translation + student-friendliness detection ---------------------------------
@@ -255,12 +155,18 @@ _GTRANS_URL = "https://translate.googleapis.com/translate_a/single"
 _GTRANS_MAX_CHARS = 4500
 
 
+_GT_PAUSE_UNTIL = 0.0      # after an HTTP 429 we stop calling Google for a while instead of hammering it
+
+
 def _google_translate(text: str) -> str:
     """Translate Russian → Uzbek via Google's public endpoint. Returns the
     original text on any failure so we never lose data."""
+    global _GT_PAUSE_UNTIL
     text = (text or "").strip()
     if not text:
         return ""
+    if time.time() < _GT_PAUSE_UNTIL:
+        return text
     if len(text) > _GTRANS_MAX_CHARS:
         chunks: list[str] = []
         buf = ""
@@ -289,7 +195,12 @@ def _google_translate(text: str) -> str:
         out_parts = [seg[0] for seg in data[0] if isinstance(seg, list) and seg]
         return "".join(out_parts) or text
     except Exception as e:
-        print(f"[hh_uz] google translate failed: {e}")
+        if "429" in str(e):
+            _GT_PAUSE_UNTIL = time.time() + 900
+            print("[hh_uz] google translate is rate-limiting us — pausing it for 15 minutes "
+                  "(untranslated rows are picked up later by translate_pending)")
+        else:
+            print(f"[hh_uz] google translate failed: {e}")
         return text
 
 
@@ -381,11 +292,19 @@ def _translate_with_groq(parsed: dict) -> dict:
     original_desc = parsed.get("description", "")
     friendly, note = _detect_student_friendly(original_req + "\n" + original_desc)
 
-    out["title"]        = _google_translate(parsed.get("title", ""))[:200] or parsed.get("title", "")
-    out["company"]      = _google_translate(parsed.get("company", ""))[:150] or parsed.get("company", "")
-    out["location"]     = _google_translate(parsed.get("location", ""))[:150] or parsed.get("location", "")
-    out["description"]  = _google_translate(parsed.get("description", "")) or parsed.get("description", "")
-    out["requirements"] = _google_translate(parsed.get("requirements", "")) or parsed.get("requirements", "")
+    def _tr(field: str, limit: int | None = None) -> str:
+        v = parsed.get(field, "") or ""
+        if not _looks_cyrillic(v):               # English / Uzbek text is left exactly as written
+            return v
+        t = _google_translate(v) or v
+        time.sleep(0.4)                          # be gentle with the free endpoint
+        return t[:limit] if limit else t
+
+    out["title"]        = _tr("title", 200)
+    out["company"]      = _tr("company", 150)
+    out["location"]     = _tr("location", 150)
+    out["description"]  = _tr("description")
+    out["requirements"] = _tr("requirements")
     out["student_friendly"]      = friendly
     out["student_friendly_note"] = note[:300]
     return out
@@ -393,141 +312,213 @@ def _translate_with_groq(parsed: dict) -> dict:
 
 # Main scraper ----------------------------------------------------------------
 
-def run_scraper(app) -> dict:
-    """Fetch latest hh.uz listings and insert up to MAX_PER_RUN new rows.
+def _row_values(job, row: dict):
+    for k in ("title", "company", "location", "job_type", "salary", "description", "requirements", "schedule_compatible",
+              "deadline", "deadline_source", "tags", "student_friendly", "student_friendly_note"):
+        if k in row:
+            setattr(job, k, row[k])
 
-    Returns a small summary dict (also printed) so the admin trigger can log
-    what happened.
-    """
+
+def run_scraper(app, source=None, sleep: Callable = time.sleep, today=None) -> dict:
+    """Search, score, de-duplicate, translate and store new student-relevant postings. Returns a summary dict."""
     from app import db
     from models import Job
 
+    today = today or datetime.utcnow().date()
     summary = {
-        "fetched": 0, "skipped_existing": 0, "skipped_invalid": 0,
-        "skipped_not_student_friendly": 0,
-        "inserted": 0, "reactivated": 0, "errors": 0,
+        "mode": "", "fetched": 0, "candidates": 0, "details": 0, "inserted": 0, "reactivated": 0,
+        "skipped_existing": 0, "skipped_low_fit": 0, "skipped_closed": 0, "skipped_expired": 0,
+        "skipped_duplicate": 0, "skipped_not_student_friendly": 0, "errors": 0, "blocked": False,
     }
 
     with app.app_context():
+        src = source or S.pick_source()
+        summary["mode"] = getattr(src, "name", "")
         try:
-            listings = _fetch_list()
+            candidates, fetched = S.collect_candidates(src, sleep=sleep)
+        except S.Blocked:
+            summary["blocked"] = True
+            print("[hh_uz] hh refused the search (403/captcha). Set HH_UZ_TOKEN (OAuth app token from dev.hh.ru) "
+                  "or HH_UZ_ALLOW_HTML=1 to read the public pages.")
+            return summary
         except Exception as e:
-            print(f"[hh_uz] unexpected list error: {e}")
+            print(f"[hh_uz] search failed: {e}")
             traceback.print_exc()
+            summary["errors"] += 1
             return summary
+        summary["fetched"], summary["candidates"] = fetched, len(candidates)
 
-        summary["fetched"] = len(listings)
-        if not listings:
-            print("[hh_uz] no listings returned — bailing out (see module docstring re: known 403 risk)")
-            return summary
+        rows_by_id = {}
+        recent_keys = {}
+        for j in Job.query.filter(Job.apply_link.isnot(None)).all():
+            vid = S.hh_id(j.apply_link)
+            if vid:
+                rows_by_id[vid] = j
+            if j.is_active and j.created_at:
+                recent_keys[S.dup_key(j.company, j.title)] = j.created_at
 
-        active_links = {
-            row[0] for row in db.session.query(Job.apply_link)
-                .filter(Job.is_active == True, Job.apply_link.isnot(None))  # noqa: E712
-                .all()
-        }
-
-        max_inserts = _max_per_run()
-        inserted_links: list[str] = []
-        reactivated_links: list[str] = []
-
-        for raw in listings:
-            if summary["inserted"] + summary["reactivated"] >= max_inserts:
-                break
-
-            vacancy_id = raw.get("id") if isinstance(raw, dict) else None
-            if not vacancy_id:
-                summary["skipped_invalid"] += 1
+        # cheap pass on the list data alone: drop what a student cannot take, rank the rest
+        ranked = []
+        for p in candidates:
+            known = rows_by_id.get(p["id"])
+            if known is not None and known.is_active:
+                summary["skipped_existing"] += 1
                 continue
+            if p.get("archived") or p.get("closed"):
+                summary["skipped_closed"] += 1
+                continue
+            score, _kind, _why = S.fit(p)
+            if score < _min_fit() - 2:               # the list has no description yet, so allow a little slack
+                summary["skipped_low_fit"] += 1
+                continue
+            ranked.append((score, p))
+        ranked.sort(key=lambda sp: sp[1].get("published_at", ""), reverse=True)     # newest first …
+        ranked.sort(key=lambda sp: -sp[0])                                           # … then best fit first (stable)
 
-            detail = _fetch_detail(vacancy_id)
-            time.sleep(0.3)  # be polite — avoid hammering the API
-
+        added = []
+        for _score, p in ranked:
+            if summary["inserted"] + summary["reactivated"] >= _max_per_run() or summary["details"] >= _max_details():
+                break
+            try:
+                detail = src.detail(p["id"])
+            except S.Blocked:
+                summary["blocked"] = True
+                print("[hh_uz] blocked while reading details — stopping this run")
+                break
+            except Exception as e:
+                summary["errors"] += 1
+                print(f"[hh_uz] detail failed for {p['id']}: {e}")
+                continue
+            summary["details"] += 1
+            sleep(0.5)
             if not detail:
                 summary["errors"] += 1
                 continue
+            full = {**p, **{k: v for k, v in detail.items() if v not in ("", [], None)}}
+            full["has_detail"] = True
 
-            parsed = _parse_job(detail)
-            if not parsed:
-                summary["skipped_invalid"] += 1
+            if full.get("archived") or full.get("closed"):
+                summary["skipped_closed"] += 1
+                continue
+            score, kind, why = S.fit(full)
+            if score < _min_fit():
+                summary["skipped_low_fit"] += 1
+                continue
+            deadline, dl_source = decide_deadline(full, today)
+            if deadline and parse_iso(deadline) < today:
+                summary["skipped_expired"] += 1
+                continue
+            key = S.dup_key(full.get("company", ""), full.get("title", ""))
+            seen_at = recent_keys.get(key)
+            known = rows_by_id.get(full["id"])
+            if known is None and seen_at and (datetime.utcnow() - seen_at) < timedelta(days=DUPLICATE_WINDOW_DAYS):
+                summary["skipped_duplicate"] += 1
                 continue
 
-            if parsed["apply_link"] in active_links:
-                summary["skipped_existing"] += 1
-                continue
-
-            # Translate Russian → Uzbek (Latin) + classify student-friendliness.
-            parsed = _translate_with_groq(parsed)
-
-            # Skip postings explicitly unfriendly to a student's schedule —
-            # saves DB space and prevents misleading our student audience.
-            if (parsed.get("student_friendly") or "").lower() == "yoq":
+            row = to_row(full, kind, deadline, dl_source)
+            base_friendly = "ha" if (full.get("internship") or full.get("flexible") or full.get("employment") in ("part", "project", "volunteer")) else "unclear"
+            row["student_friendly"], row["student_friendly_note"] = base_friendly, ("; ".join(why)[:300] if why else "")
+            if _has_cyrillic(row["title"], row["description"], row["requirements"], row["company"], row["location"]):
+                row = _translate_with_groq(row)         # Uzbek (Latin) + AI student-friendliness
+            if (row.get("student_friendly") or "").lower() == "yoq":
                 summary["skipped_not_student_friendly"] += 1
                 continue
 
             try:
-                existing = Job.query.filter_by(apply_link=parsed["apply_link"]).first()
-                if existing:
-                    existing.title                  = parsed["title"]
-                    existing.company                = parsed["company"]
-                    existing.location               = parsed["location"]
-                    existing.job_type               = parsed["job_type"]
-                    existing.salary                 = parsed["salary"]
-                    existing.description            = parsed["description"]
-                    existing.requirements           = parsed["requirements"]
-                    existing.schedule_compatible    = parsed["schedule_compatible"]
-                    existing.deadline               = parsed["deadline"]
-                    existing.tags                   = parsed["tags"]
-                    existing.student_friendly       = parsed.get("student_friendly", "")
-                    existing.student_friendly_note  = parsed.get("student_friendly_note", "")
-                    existing.is_active              = True
-                    db.session.commit()
-                    active_links.add(parsed["apply_link"])
-                    reactivated_links.append(parsed["apply_link"])
+                if known is not None:
+                    _row_values(known, row)
+                    known.is_active, known.source = True, "hh"
+                    known.closed_reason, known.closed_at, known.last_checked_at = "", None, datetime.utcnow()
                     summary["reactivated"] += 1
-                    continue
-
-                job = Job(
-                    title=parsed["title"],
-                    company=parsed["company"],
-                    location=parsed["location"],
-                    job_type=parsed["job_type"],
-                    salary=parsed["salary"],
-                    description=parsed["description"],
-                    requirements=parsed["requirements"],
-                    schedule_compatible=parsed["schedule_compatible"],
-                    deadline=parsed["deadline"],
-                    tags=parsed["tags"],
-                    apply_link=parsed["apply_link"],
-                    student_friendly=parsed.get("student_friendly", ""),
-                    student_friendly_note=parsed.get("student_friendly_note", ""),
-                    is_active=True,
-                )
-                db.session.add(job)
+                else:
+                    db.session.add(Job(**row, source="hh", is_active=True, last_checked_at=datetime.utcnow()))
+                    summary["inserted"] += 1
                 db.session.commit()
-                active_links.add(parsed["apply_link"])
-                inserted_links.append(parsed["apply_link"])
-                summary["inserted"] += 1
+                recent_keys[key] = datetime.utcnow()
+                added.append(row["apply_link"])
             except Exception as e:
                 db.session.rollback()
                 summary["errors"] += 1
-                print(f"[hh_uz] write failed for {parsed['apply_link']}: {e}")
+                print(f"[hh_uz] write failed for {row['apply_link']}: {e}")
 
-        print(
-            f"[hh_uz] done — fetched={summary['fetched']} "
-            f"inserted={summary['inserted']} "
-            f"reactivated={summary['reactivated']} "
-            f"skipped_existing={summary['skipped_existing']} "
-            f"skipped_invalid={summary['skipped_invalid']} "
-            f"skipped_not_student_friendly={summary['skipped_not_student_friendly']} "
-            f"errors={summary['errors']}"
-        )
-        if inserted_links:
-            print(f"[hh_uz] new postings:\n  " + "\n  ".join(inserted_links))
-        if reactivated_links:
-            print(f"[hh_uz] reactivated postings:\n  " + "\n  ".join(reactivated_links))
-
+        print("[hh_uz] done — " + " ".join(f"{k}={v}" for k, v in summary.items()))
+        if added:
+            print("[hh_uz] new/updated postings:\n  " + "\n  ".join(added))
     return summary
+
+
+# Nightly check of what is already published ------------------------------------
+
+def verify_active_jobs(app, source=None, limit: int = 120, sleep: Callable = time.sleep, today=None) -> dict:
+    """Re-open each live scraped posting. Closed / removed ones are hidden (with a reason); deadlines are refreshed.
+
+    Safe by design: a 403, captcha or network error is "unknown" and changes nothing — only a definite
+    "closed/archived" or "no such vacancy" answer hides a job, and five unknowns in a row stop the run.
+    """
+    from app import db
+    from models import Job
+
+    today = today or datetime.utcnow().date()
+    summary = {"checked": 0, "closed": 0, "gone": 0, "expired": 0, "deadline_updated": 0, "unknown": 0, "blocked": False}
+    with app.app_context():
+        src = source or S.pick_source()
+        rows = (Job.query.filter(Job.is_active.is_(True), Job.apply_link.isnot(None), Job.apply_link.like("%hh.%/vacancy/%"))
+                .order_by(Job.last_checked_at.is_(None).desc(), Job.last_checked_at.asc()).limit(limit).all())
+        streak = 0
+        for job in rows:
+            vid = S.hh_id(job.apply_link)
+            if not vid:
+                continue
+            try:
+                state, p = src.status(vid)
+            except S.Blocked:
+                summary["blocked"] = True
+                break
+            except Exception as e:
+                state, p = "unknown", None
+                print(f"[verify] {vid}: {e}")
+            sleep(0.4)
+            if state == "unknown":
+                summary["unknown"] += 1
+                streak += 1
+                if streak >= 5:
+                    break
+                continue
+            streak = 0
+            summary["checked"] += 1
+            now = datetime.utcnow()
+            job.last_checked_at = now
+            if state in ("closed", "gone"):
+                job.is_active, job.closed_at = False, now
+                job.closed_reason = "yopilgan" if state == "closed" else "e'lon topilmadi"
+                summary["closed" if state == "closed" else "gone"] += 1
+            elif p and (job.deadline_source or "") != "admin":
+                new, src_name = decide_deadline(p, today)
+                if new and new != (job.deadline or ""):
+                    job.deadline, job.deadline_source = new, src_name
+                    summary["deadline_updated"] += 1
+                if is_expired(job.deadline, today):
+                    job.is_active, job.closed_at, job.closed_reason = False, now, "muddati o'tgan"
+                    summary["expired"] += 1
+            db.session.commit()
+        print("[verify] " + " ".join(f"{k}={v}" for k, v in summary.items()))
+    return summary
+
+
+def purge_closed(app, days: int = PURGE_AFTER_DAYS) -> int:
+    """Delete scraped rows that have been closed for more than `days` days (admin-entered rows are never touched)."""
+    from app import db
+    from models import Job
+
+    with app.app_context():
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        old = Job.query.filter(Job.is_active.is_(False), Job.source == "hh", Job.closed_at.isnot(None), Job.closed_at < cutoff).all()
+        for j in old:
+            db.session.delete(j)
+        if old:
+            db.session.commit()
+        print(f"[purge] deleted {len(old)} long-closed job(s)")
+        return len(old)
 
 
 # Retroactive translation -----------------------------------------------------
@@ -560,13 +551,16 @@ def translate_pending(app, limit: int = 80) -> dict:
         )
         for job in rows:
             summary["scanned"] += 1
-            needs = (
+            cyrillic = (
                 _looks_cyrillic(job.title or "")
                 or _looks_cyrillic(job.description or "")
                 or _looks_cyrillic(job.requirements or "")
-                or not (job.student_friendly or "")
             )
-            if not needs:
+            if not cyrillic:
+                # nothing to translate (already Uzbek / English): never send it through the ru→uz translator
+                if not (job.student_friendly or ""):
+                    job.student_friendly = "unclear"
+                    db.session.commit()
                 summary["skipped"] += 1
                 continue
 

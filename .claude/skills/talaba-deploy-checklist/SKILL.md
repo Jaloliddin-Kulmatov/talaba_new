@@ -19,6 +19,7 @@ Required: `SECRET_KEY`, `JWT_SECRET_KEY`, `DATABASE_URL` (Postgres; `postgres://
 Optional: `GROQ_API_KEY` (AI chat/translation), `ADMIN_SECRET` (+ `/api/admin/bootstrap`), `ADMIN_EMAIL`, `SCRAPER_SECRET`, `HH_UZ_QUERY`, `HH_UZ_TRANSLATE_MODEL`,
 email: `RESEND_API_KEY`/`RESEND_FROM` or `SMTP_HOST`/`SMTP_PORT`/`SENDER_EMAIL`/`SENDER_PASSWORD`, `ABSTRACT_EMAIL_API_KEY` (email validation),
 push reminders: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (generate **once**: `python backend/make_vapid_keys.py`; rotating them kills every subscription).
+Job scraper (hh.uz → `scrapers/hh_uz.py`, `scrapers/hh_sources.py`): hh answers anonymous API calls with **403**, so set `HH_UZ_TOKEN` (OAuth app token from dev.hh.ru) — or opt in to reading the public pages with `HH_UZ_ALLOW_HTML=1` (check hh's terms first). Tunables: `HH_UZ_PAGES` (2), `MAX_PER_RUN` (25), `HH_UZ_MAX_DETAILS` (60), `HH_UZ_MIN_FIT` (4). Schedule: scrape 06:00/18:00 UTC, deadline sweep + nightly verification 00:30/00:45 UTC, purge of rows closed 90+ days on Sundays. Admin: `POST /api/admin/jobs/scrape-now`, `/jobs/verify`, `GET /jobs/health`. `PUBLIC_API_URL` makes the job e-mail's unsubscribe link one-click.
 `DISABLE_SCHEDULER=1` on all but one process if you run several workers/instances (scraper + reminder jobs).
 
 ## One-time setup

@@ -3,6 +3,7 @@
 const assert = require("assert");
 const { relatedGuide } = require("../.test-out/lib/guide-topics.js");
 const ev = require("../.test-out/lib/events.js");
+const dl = require("../.test-out/lib/deadline.js");
 let n = 0; const ok = (name, fn) => { fn(); n++; console.log("  ✓", name); };
 
 console.log("related guide");
@@ -36,5 +37,16 @@ ok("Google Calendar link: one-hour slot in UTC, escaped text", () => {
   assert.equal(u.searchParams.get("text"), "Hackathon & demo");
   assert.equal(u.searchParams.get("details"), "Python klubi\nKod");
 });
+
+console.log("job deadlines");
+const today = new Date(2026, 9, 21);                                  // 21 Oct 2026, local
+ok("far deadline: date and days", () => { const i = dl.deadlineInfo("2026-11-15", today); assert.equal(i.tone, "ok"); assert.equal(i.days, 25); assert.equal(i.label, "Muddat: 15-noy, 2026 (25 kun)"); });
+ok("within 5 days → 'N kun qoldi' (soon)", () => { const i = dl.deadlineInfo("2026-10-24", today); assert.equal(i.tone, "soon"); assert.equal(i.label, "3 kun qoldi"); });
+ok("today is the last day", () => { const i = dl.deadlineInfo("2026-10-21", today); assert.equal(i.tone, "today"); assert.equal(i.label, "Bugun oxirgi kun"); });
+ok("yesterday → expired", () => { const i = dl.deadlineInfo("2026-10-20", today); assert.equal(i.tone, "expired"); assert.equal(i.days, -1); });
+ok("blank → rolling", () => { const i = dl.deadlineInfo("", today); assert.equal(i.tone, "rolling"); assert.equal(i.days, null); });
+ok("free text is shown as written", () => { const i = dl.deadlineInfo("Iyun 30", today); assert.equal(i.tone, "text"); assert.equal(i.label, "Muddat: Iyun 30"); });
+ok("time of day never shifts the day count (23:59 vs 00:01)", () => { assert.equal(dl.daysUntil("2026-10-22", new Date(2026, 9, 21, 23, 59)), 1); assert.equal(dl.daysUntil("2026-10-22", new Date(2026, 9, 21, 0, 1)), 1); });
+ok("deadlineRank: soonest first, rolling and expired last", () => { const r = (x) => dl.deadlineRank(x, today); assert(r("2026-10-22") < r("2026-11-20")); assert(r("2026-11-20") < r("")); assert(r("2026-10-01") >= r("2026-11-20")); assert.equal(r("Doimiy"), r("")); });
 
 console.log(`\nsocial helpers: all ${n} passed`);

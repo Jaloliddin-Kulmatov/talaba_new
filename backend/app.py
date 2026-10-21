@@ -221,8 +221,13 @@ def _run_lightweight_migrations():
     except Exception as e:
         print(f"[migration] users.job_alerts_enabled failed (probably already done): {e}")
 
-    # columns added after the first release of the Q&A chat and the job-alert e-mails
+    # columns added after the first release of the Q&A chat, the job-alert e-mails and the smarter scraper
     for table, col_name, col_def in [
+        ("jobs", "source", "VARCHAR(20) DEFAULT ''"),
+        ("jobs", "deadline_source", "VARCHAR(12) DEFAULT ''"),
+        ("jobs", "closed_reason", "VARCHAR(40) DEFAULT ''"),
+        ("jobs", "closed_at", "TIMESTAMP"),
+        ("jobs", "last_checked_at", "TIMESTAMP"),
         ("chat_posts", "accepted_answer_id", "INTEGER"),
         ("chat_answers", "report_count", "INTEGER DEFAULT 0 NOT NULL"),
         ("users", "job_digest_at", "TIMESTAMP"),
@@ -583,35 +588,22 @@ app = create_app()
 
 # ── Expired-job cleanup ──────────────────────────────────────────────────────
 def _cleanup_expired_jobs(flask_app):
-    """Soft-delete jobs whose deadline date is in the past.
+    """Hide jobs whose deadline day has passed (the deadline day itself is still open).
 
-    Deadlines are stored as VARCHAR(50) and come in mixed shapes:
-      - "2025-08-31"          (scraped from hh.uz — always ISO)
-      - "Iyun 30"             (admin free text — skipped, can't parse year)
-      - "Doimiy" / "" / None  (skipped)
-
-    We only deactivate rows whose deadline parses cleanly as YYYY-MM-DD and
-    that date is strictly before today (UTC). Free-text deadlines are left
-    alone — they're admin-managed.
+    Understands every date written as a date — "2026-11-20", "20.11.2026", "20 noyabr 2026" — and leaves
+    free text ("Doimiy", "Iyun 30") alone, because that is admin-managed.
     """
-    from datetime import date, datetime
+    from datetime import datetime
+    from deadlines import is_expired
     from models import Job
 
     with flask_app.app_context():
         try:
-            today = datetime.utcnow().date()
-            active = Job.query.filter_by(is_active=True).all()
+            now = datetime.utcnow()
             deactivated = 0
-            for job in active:
-                raw = (job.deadline or "").strip()
-                if len(raw) < 10:
-                    continue
-                try:
-                    dl = date.fromisoformat(raw[:10])
-                except ValueError:
-                    continue  # not an ISO date — leave it
-                if dl < today:
-                    job.is_active = False
+            for job in Job.query.filter_by(is_active=True).all():
+                if is_expired(job.deadline, now.date()):
+                    job.is_active, job.closed_reason, job.closed_at = False, "muddati o'tgan", now
                     deactivated += 1
             if deactivated:
                 db.session.commit()
@@ -710,6 +702,23 @@ def _start_scheduler(flask_app):
             print("[scheduler] push reminders off (VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY not set)")
     except Exception as e:
         print(f"[scheduler] push reminders unavailable: {e}")
+
+    # Nightly: re-check every live scraped posting against hh.uz (closed / removed → hidden, deadlines refreshed),
+    # and once a week delete rows that have been closed for 90+ days.
+    try:
+        from scrapers.hh_uz import verify_active_jobs, purge_closed
+        scheduler.add_job(
+            lambda: (_cleanup_expired_jobs(flask_app), verify_active_jobs(flask_app), _cleanup_expired_jobs(flask_app)),
+            trigger="cron", hour=0, minute=45, id="verify_jobs",
+            replace_existing=True, max_instances=1, coalesce=True, misfire_grace_time=3600,
+        )
+        scheduler.add_job(
+            lambda: purge_closed(flask_app),
+            trigger="cron", day_of_week="sun", hour=1, minute=15, id="purge_closed_jobs",
+            replace_existing=True, max_instances=1, coalesce=True, misfire_grace_time=3600,
+        )
+    except Exception as e:
+        print(f"[scheduler] job verification unavailable: {e}")
 
     # Daily job e-mail for students who switched alerts on: 05:00 UTC = 10:00 Tashkent
     try:
