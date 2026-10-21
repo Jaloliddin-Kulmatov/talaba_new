@@ -5,7 +5,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_req
 from sqlalchemy.orm import joinedload
 
 from app import db
-from models import Club, ClubMembership, User, ClubMessage
+from models import Club, ClubEvent, ClubMembership, User, ClubMessage
 
 clubs_bp = Blueprint("clubs", __name__)
 
@@ -474,3 +474,101 @@ def send_chat(club_id):
     db.session.add(msg)
     db.session.commit()
     return jsonify({"message": msg.to_dict()}), 201
+
+
+# ── Club events ───────────────────────────────────────────────
+
+def _parse_start(raw):
+    """ISO-8601 string (with Z or an offset) -> naive UTC datetime, or ValueError."""
+    from datetime import datetime, timedelta, timezone
+    if not isinstance(raw, str) or not raw.strip():
+        raise ValueError("Boshlanish vaqtini kiriting.")
+    try:
+        dt = datetime.fromisoformat(raw.strip().replace("Z", "+00:00"))
+    except ValueError:
+        raise ValueError("Vaqt formati noto'g'ri.")
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+    now = datetime.utcnow()
+    if dt < now - timedelta(days=1):
+        raise ValueError("O'tib ketgan sanaga tadbir qo'shib bo'lmaydi.")
+    if dt > now + timedelta(days=730):
+        raise ValueError("Sana juda uzoq (ko'pi bilan 2 yil).")
+    return dt
+
+
+def _can_manage(club, user_id):
+    if not user_id:
+        return False
+    u = User.query.get(user_id)
+    return club.created_by == user_id or bool(u and u.role == "admin")
+
+
+@clubs_bp.route("/events/upcoming", methods=["GET"])
+def my_upcoming_events():
+    """Next events of the clubs the signed-in student belongs to (or owns)."""
+    from datetime import datetime, timedelta
+    user_id = _current_user_id()
+    if not user_id:
+        return jsonify({"events": []}), 200
+    mine = {m.club_id for m in ClubMembership.query.filter_by(user_id=user_id, status="approved")}
+    mine |= {c.id for c in Club.query.filter_by(created_by=user_id)}
+    if not mine:
+        return jsonify({"events": []}), 200
+    now = datetime.utcnow()
+    rows = (ClubEvent.query
+            .filter(ClubEvent.club_id.in_(mine), ClubEvent.starts_at >= now - timedelta(hours=2),
+                    ClubEvent.starts_at <= now + timedelta(days=60))
+            .order_by(ClubEvent.starts_at.asc()).limit(30).all())
+    return jsonify({"events": [e.to_dict(user_id) for e in rows]}), 200
+
+
+@clubs_bp.route("/<int:club_id>/events", methods=["GET"])
+def list_events(club_id):
+    from datetime import datetime, timedelta
+    Club.query.get_or_404(club_id)
+    viewer = _current_user_id()
+    rows = (ClubEvent.query
+            .filter(ClubEvent.club_id == club_id, ClubEvent.starts_at >= datetime.utcnow() - timedelta(hours=2))
+            .order_by(ClubEvent.starts_at.asc()).limit(50).all())
+    return jsonify({"events": [e.to_dict(viewer) for e in rows]}), 200
+
+
+@clubs_bp.route("/<int:club_id>/events", methods=["POST"])
+@jwt_required()
+def create_event(club_id):
+    from datetime import datetime
+    from routes._common import clean
+    user_id = int(get_jwt_identity())
+    club = Club.query.get_or_404(club_id)
+    if not _can_manage(club, user_id):
+        return jsonify({"error": "Faqat klub yaratuvchisi tadbir qo'sha oladi."}), 403
+    data = request.get_json(silent=True) or {}
+    try:
+        title = clean(data.get("title"), 120, 3)
+        if not title:
+            raise ValueError("Tadbir nomi kamida 3 belgidan iborat bo'lsin.")
+        ev = ClubEvent(club_id=club_id, created_by=user_id, title=title,
+                       description=clean(data.get("description"), 1000),
+                       location=clean(data.get("location"), 160),
+                       starts_at=_parse_start(data.get("starts_at")))
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    if ClubEvent.query.filter(ClubEvent.club_id == club_id, ClubEvent.starts_at >= datetime.utcnow()).count() >= 30:
+        return jsonify({"error": "Bitta klubda ko'pi bilan 30 ta kelgusi tadbir bo'lishi mumkin."}), 400
+    db.session.add(ev)
+    db.session.commit()
+    return jsonify({"event": ev.to_dict(user_id)}), 201
+
+
+@clubs_bp.route("/<int:club_id>/events/<int:event_id>", methods=["DELETE"])
+@jwt_required()
+def delete_event(club_id, event_id):
+    user_id = int(get_jwt_identity())
+    club = Club.query.get_or_404(club_id)
+    ev = ClubEvent.query.filter_by(id=event_id, club_id=club_id).first_or_404()
+    if not _can_manage(club, user_id):
+        return jsonify({"error": "Faqat klub yaratuvchisi tadbirni o'chira oladi."}), 403
+    db.session.delete(ev)
+    db.session.commit()
+    return jsonify({"message": "Tadbir o'chirildi."}), 200

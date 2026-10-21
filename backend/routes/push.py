@@ -4,7 +4,7 @@ import os
 from flask import Blueprint, request, jsonify
 
 from app import db
-from models import PushSubscription, SentReminder
+from models import DeviceToken, PushSubscription, SentReminder
 from push_service import PushGone, endpoint_ok, send_push, vapid_configured
 from reminders import normalize_prefs
 from routes._common import require_user
@@ -122,3 +122,38 @@ def test_push():
         print(f"[push] test failed: {e}")
         return jsonify({"error": "Yuborib bo'lmadi. Keyinroq urinib ko'ring."}), 502
     return jsonify({"message": "Sinov eslatmasi yuborildi."}), 200
+
+
+@push_bp.route("/device", methods=["POST"])
+def register_device():
+    """The phone app registers its Expo push token (iOS / Android)."""
+    user, err = require_user()
+    if err:
+        return err
+    body = request.get_json(silent=True) or {}
+    token = body.get("token")
+    if not (isinstance(token, str) and token.startswith(("ExponentPushToken[", "ExpoPushToken[")) and len(token) <= 200):
+        return jsonify({"error": "Qurilma kaliti noto'g'ri."}), 400
+    platform = body.get("platform") if body.get("platform") in ("ios", "android") else None
+    row = DeviceToken.query.filter_by(token=token).first()
+    if row:
+        row.user_id, row.platform = user.id, platform   # the phone now belongs to whoever is signed in
+    else:
+        mine = DeviceToken.query.filter_by(user_id=user.id).order_by(DeviceToken.created_at.asc()).all()
+        for old in mine[: max(0, len(mine) - MAX_SUBS_PER_USER + 1)]:
+            db.session.delete(old)
+        db.session.add(DeviceToken(user_id=user.id, token=token, platform=platform))
+    db.session.commit()
+    return jsonify({"message": "Qurilma ulandi."}), 200
+
+
+@push_bp.route("/device", methods=["DELETE"])
+def unregister_device():
+    user, err = require_user()
+    if err:
+        return err
+    token = (request.get_json(silent=True) or {}).get("token") or request.args.get("token")
+    if isinstance(token, str):
+        DeviceToken.query.filter_by(user_id=user.id, token=token).delete(synchronize_session=False)
+        db.session.commit()
+    return jsonify({"message": "Qurilma o'chirildi."}), 200

@@ -240,7 +240,45 @@ def add_answer(post_id: int):
     )
     db.session.add(ans)
     db.session.commit()
+    if post.user_id != user.id:
+        from notify import notify_user
+        notify_user(post.user_id, "Savolingizga javob keldi", f"{user.name.split(' ')[0]}: {content}",
+                    url=f"/chat/{post.id}", tag=f"answer-{post.id}", kind="answers")
     return jsonify({"answer": ans.to_dict()}), 201
+
+
+@chat_bp.route("/posts/<int:post_id>/accept/<int:answer_id>", methods=["POST"])
+@jwt_required()
+def accept_answer(post_id: int, answer_id: int):
+    """The asker marks one answer as the best one; calling it again on the same answer un-marks it."""
+    user = _current_user()
+    if not user:
+        return jsonify({"error": "Tizimga kirish talab qilinadi."}), 401
+    post = ChatPost.query.filter_by(id=post_id, is_active=True).first()
+    if not post:
+        return jsonify({"error": "Post topilmadi yoki o'chirilgan."}), 404
+    if post.user_id != user.id:
+        return jsonify({"error": "Faqat savol egasi javobni tanlashi mumkin."}), 403
+    ans = ChatAnswer.query.filter_by(id=answer_id, post_id=post_id, is_active=True).first()
+    if not ans:
+        return jsonify({"error": "Javob topilmadi."}), 404
+    post.accepted_answer_id = None if post.accepted_answer_id == ans.id else ans.id
+    db.session.commit()
+    return jsonify({"accepted_answer_id": post.accepted_answer_id, "solved": bool(post.accepted_answer_id)}), 200
+
+
+@chat_bp.route("/answers/<int:answer_id>/report", methods=["POST"])
+@jwt_required()
+def report_answer(answer_id: int):
+    from routes._common import report, require_user
+    user, err = require_user()
+    if err:
+        return err
+    ans = ChatAnswer.query.filter_by(id=answer_id, is_active=True).first()
+    if not ans:
+        return jsonify({"error": "Javob topilmadi."}), 404
+    data = request.get_json(silent=True) or {}
+    return report("answer", ans, user, data.get("reason"), lambda i: setattr(i, "is_active", False))
 
 
 @chat_bp.route("/posts/<int:post_id>", methods=["DELETE"])

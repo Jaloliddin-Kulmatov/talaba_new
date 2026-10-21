@@ -18,6 +18,7 @@ class User(db.Model):
     # matching their university / region. Toggled from the Internships page
     # "Enable Alerts" button.
     job_alerts_enabled = db.Column(db.Boolean, default=False)
+    job_digest_at = db.Column(db.DateTime)   # when the last daily job email went out (claimed before sending)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -368,6 +369,9 @@ class ChatPost(db.Model):
     # in the global feed.
     scope      = db.Column(db.String(80), default="", index=True)
     is_active  = db.Column(db.Boolean, default=True)
+    # The asker can mark one answer as the best one ("Hal qilindi"). No FK on purpose: answers are
+    # soft-deleted and this keeps account deletion simple.
+    accepted_answer_id = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     author = db.relationship("User", foreign_keys=[user_id])
@@ -383,6 +387,8 @@ class ChatPost(db.Model):
             "content": self.content,
             "scope": (self.scope or ""),
             "image_url": self.image_url or "",
+            "accepted_answer_id": self.accepted_answer_id,
+            "solved": bool(self.accepted_answer_id),
             "answer_count": ChatAnswer.query.filter_by(post_id=self.id, is_active=True).count(),
             "created_at": self.created_at.isoformat() + "Z",
         }
@@ -403,6 +409,7 @@ class ChatAnswer(db.Model):
     user_id    = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     content    = db.Column(db.Text, nullable=False)
     is_active  = db.Column(db.Boolean, default=True)
+    report_count = db.Column(db.Integer, default=0, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     author = db.relationship("User", foreign_keys=[user_id])
@@ -608,3 +615,122 @@ class SentReminder(db.Model):
     subscription_id = db.Column(db.Integer, db.ForeignKey("push_subscriptions.id"), nullable=False, index=True)
     key = db.Column(db.String(160), nullable=False)
     sent_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+
+# ── Direct messages, blocking ────────────────────────────────────────────────
+
+class DirectMessage(db.Model):
+    """One private message between two students. `read_at` is set when the recipient opens the thread."""
+    __tablename__ = "direct_messages"
+    __table_args__ = (
+        db.Index("ix_dm_pair_time", "sender_id", "recipient_id", "created_at"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    recipient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    body = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    read_at = db.Column(db.DateTime)
+
+    def to_dict(self, viewer_id=None):
+        return {
+            "id": self.id,
+            "sender_id": self.sender_id,
+            "recipient_id": self.recipient_id,
+            "body": self.body,
+            "created_at": _iso(self.created_at),
+            "read": self.read_at is not None,
+            "mine": bool(viewer_id and viewer_id == self.sender_id),
+        }
+
+
+class UserBlock(db.Model):
+    """`blocker` does not want to hear from `blocked` (neither can write to the other)."""
+    __tablename__ = "user_blocks"
+    __table_args__ = (db.UniqueConstraint("blocker_id", "blocked_id", name="uq_block_once"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    blocker_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    blocked_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+# ── Club events, news, CV file, phone push tokens ────────────────────────────
+
+class ClubEvent(db.Model):
+    __tablename__ = "club_events"
+
+    id = db.Column(db.Integer, primary_key=True)
+    club_id = db.Column(db.Integer, db.ForeignKey("clubs.id"), nullable=False, index=True)
+    created_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    title = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text)
+    starts_at = db.Column(db.DateTime, nullable=False, index=True)   # naive UTC
+    location = db.Column(db.String(160))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    club = db.relationship("Club", foreign_keys=[club_id])
+
+    def to_dict(self, viewer_id=None):
+        return {
+            "id": self.id,
+            "club_id": self.club_id,
+            "club_name": self.club.name if self.club else "",
+            "title": self.title,
+            "description": self.description or "",
+            "starts_at": _iso(self.starts_at),
+            "location": self.location or "",
+            "is_mine": bool(viewer_id and viewer_id == self.created_by),
+        }
+
+
+class NewsItem(db.Model):
+    """University / education news posted by an administrator. Old items stop showing after 120 days."""
+    __tablename__ = "news_items"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    summary = db.Column(db.Text)
+    url = db.Column(db.String(500))
+    source = db.Column(db.String(120))
+    published_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey("users.id"))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "summary": self.summary or "",
+            "url": self.url or "",
+            "source": self.source or "",
+            "published_at": _iso(self.published_at),
+        }
+
+
+class CvFile(db.Model):
+    """The student's uploaded CV (PDF or Word, ≤ 2 MB). Only its owner can ever read it."""
+    __tablename__ = "cv_files"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True, index=True)
+    filename = db.Column(db.String(200), nullable=False)
+    mime = db.Column(db.String(100), nullable=False)
+    size = db.Column(db.Integer, nullable=False)
+    data = db.Column(db.LargeBinary, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def meta(self):
+        return {"filename": self.filename, "mime": self.mime, "size": self.size, "updated_at": _iso(self.updated_at)}
+
+
+class DeviceToken(db.Model):
+    """An Expo push token of the phone app (iOS / Android)."""
+    __tablename__ = "device_tokens"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    token = db.Column(db.String(200), nullable=False, unique=True)
+    platform = db.Column(db.String(12))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

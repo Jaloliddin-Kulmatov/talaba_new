@@ -77,6 +77,10 @@ def create_app():
     from routes.sync import sync_bp
     from routes.moderation import moderation_bp
     from routes.push import push_bp
+    from routes.messages import messages_bp
+    from routes.news import news_bp
+    from routes.cvfile import cv_bp
+    from routes.alerts import alerts_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(ai_bp, url_prefix="/api/ai")
@@ -94,6 +98,10 @@ def create_app():
     app.register_blueprint(sync_bp, url_prefix="/api/sync")
     app.register_blueprint(moderation_bp, url_prefix="/api/moderation")
     app.register_blueprint(push_bp, url_prefix="/api/push")
+    app.register_blueprint(messages_bp, url_prefix="/api/messages")
+    app.register_blueprint(news_bp, url_prefix="/api/news")
+    app.register_blueprint(cv_bp, url_prefix="/api/cv")
+    app.register_blueprint(alerts_bp, url_prefix="/api/alerts")
 
     @app.route("/")
     def index():
@@ -212,6 +220,22 @@ def _run_lightweight_migrations():
                 print("[migration] Added users.job_alerts_enabled")
     except Exception as e:
         print(f"[migration] users.job_alerts_enabled failed (probably already done): {e}")
+
+    # columns added after the first release of the Q&A chat and the job-alert e-mails
+    for table, col_name, col_def in [
+        ("chat_posts", "accepted_answer_id", "INTEGER"),
+        ("chat_answers", "report_count", "INTEGER DEFAULT 0 NOT NULL"),
+        ("users", "job_digest_at", "TIMESTAMP"),
+    ]:
+        try:
+            if table in insp.get_table_names():
+                cols = [c["name"] for c in insp.get_columns(table)]
+                if col_name not in cols:
+                    with db.engine.begin() as conn:
+                        conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_def}"))
+                    print(f"[migration] Added {table}.{col_name}")
+        except Exception as e:
+            print(f"[migration] {table}.{col_name} failed (probably already done): {e}")
 
     # scope on chat_posts — audience targeting. Empty = global ("Butun O'zbekiston"),
     # a university token (e.g. "nuu") = that university's chat only.
@@ -686,6 +710,17 @@ def _start_scheduler(flask_app):
             print("[scheduler] push reminders off (VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY not set)")
     except Exception as e:
         print(f"[scheduler] push reminders unavailable: {e}")
+
+    # Daily job e-mail for students who switched alerts on: 05:00 UTC = 10:00 Tashkent
+    try:
+        from job_digest import send_job_digests
+        scheduler.add_job(
+            lambda: send_job_digests(flask_app),
+            trigger="cron", hour=5, minute=0, id="job_digest",
+            replace_existing=True, max_instances=1, coalesce=True, misfire_grace_time=3600,
+        )
+    except Exception as e:
+        print(f"[scheduler] job digest unavailable: {e}")
 
     scheduler.start()
     print(

@@ -11,6 +11,7 @@ from models import (
     Post, PostComment, AmbassadorApplication, Feedback, AISession, Job,
     CourseReview, MarketItem, LostFoundItem, ContentReport, UserSync,
     PushSubscription, SentReminder,
+    DirectMessage, UserBlock, CvFile, DeviceToken, ClubEvent, ChatPost, ChatAnswer,
 )
 
 auth_bp = Blueprint("auth", __name__)
@@ -333,6 +334,7 @@ def delete_me():
                 PostComment.query.filter(PostComment.post_id.in_(club_post_ids))\
                     .delete(synchronize_session=False)
                 Post.query.filter(Post.id.in_(club_post_ids)).delete(synchronize_session=False)
+            ClubEvent.query.filter(ClubEvent.club_id.in_(owned_club_ids)).delete(synchronize_session=False)
             Club.query.filter(Club.id.in_(owned_club_ids)).delete(synchronize_session=False)
 
         # 5) Jobs the user created — set created_by to NULL so postings survive
@@ -362,6 +364,22 @@ def delete_me():
         LostFoundItem.query.filter_by(user_id=user_id).delete(synchronize_session=False)
         ContentReport.query.filter_by(user_id=user_id).delete(synchronize_session=False)
         UserSync.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+        # Q&A: the user's answers, and their questions together with every answer under them.
+        ChatAnswer.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+        own_post_ids = [x.id for x in ChatPost.query.filter_by(user_id=user_id).all()]
+        if own_post_ids:
+            ChatAnswer.query.filter(ChatAnswer.post_id.in_(own_post_ids)).delete(synchronize_session=False)
+            ChatPost.query.filter(ChatPost.id.in_(own_post_ids)).delete(synchronize_session=False)
+        DirectMessage.query.filter(
+            (DirectMessage.sender_id == user_id) | (DirectMessage.recipient_id == user_id)
+        ).delete(synchronize_session=False)
+        UserBlock.query.filter(
+            (UserBlock.blocker_id == user_id) | (UserBlock.blocked_id == user_id)
+        ).delete(synchronize_session=False)
+        ContentReport.query.filter_by(kind="user", item_id=user_id).delete(synchronize_session=False)
+        CvFile.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+        DeviceToken.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+        ClubEvent.query.filter_by(created_by=user_id).delete(synchronize_session=False)
         sub_ids = [x.id for x in PushSubscription.query.filter_by(user_id=user_id).all()]
         if sub_ids:
             SentReminder.query.filter(SentReminder.subscription_id.in_(sub_ids)).delete(synchronize_session=False)

@@ -6,7 +6,7 @@ from sqlalchemy import func
 
 from app import db
 from models import (
-    ContentReport, CourseReview, LostFoundItem, MarketItem, User,
+    ChatAnswer, ContentReport, CourseReview, LostFoundItem, MarketItem, User,
 )
 from routes._common import is_admin, require_user
 
@@ -16,6 +16,7 @@ moderation_bp = Blueprint("moderation", __name__)
 KINDS = {
     "review":    (CourseReview, lambda i: setattr(i, "is_active", False), lambda i: setattr(i, "is_active", True),  lambda i: not i.is_active),
     "market":    (MarketItem,   lambda i: setattr(i, "status", "hidden"), lambda i: setattr(i, "status", "active"), lambda i: i.status == "hidden"),
+    "answer":    (ChatAnswer,   lambda i: setattr(i, "is_active", False), lambda i: setattr(i, "is_active", True),  lambda i: not i.is_active),
     "lostfound": (LostFoundItem, lambda i: setattr(i, "status", "hidden"), lambda i: setattr(i, "status", "open"),  lambda i: i.status == "hidden"),
 }
 
@@ -32,6 +33,8 @@ def _admin():
 def _summary(kind, item):
     if kind == "review":
         return f"{item.subject} · {item.teacher or 'o‘qituvchisiz'} · {item.university}", (item.text or "")[:240]
+    if kind == "answer":
+        return f"Javob (savol #{item.post_id})", (item.content or "")[:240]
     if kind == "market":
         return item.title, (item.description or "")[:240]
     return item.title, f"{item.place} — {(item.description or '')[:200]}"
@@ -85,6 +88,21 @@ def queue():
                 "author": {"id": author.id, "name": author.name, "email": author.email} if author else None,
                 "created_at": item.created_at.isoformat() + "Z" if item.created_at else None,
             })
+    # Reported people (direct messages). Administrators decide by hand; nobody is ever hidden automatically.
+    by_user = {}
+    for r in ContentReport.query.filter_by(kind="user").order_by(ContentReport.created_at.desc()).all():
+        by_user.setdefault(r.item_id, []).append(r)
+    for uid, reports in by_user.items():
+        u = User.query.get(uid)
+        if not u:
+            continue
+        out.append({
+            "kind": "user", "id": u.id, "title": u.name, "preview": u.university or "",
+            "hidden": False, "report_count": len(reports),
+            "reasons": [r.reason for r in reports if r.reason][:8],
+            "author": {"id": u.id, "name": u.name, "email": u.email},
+            "created_at": reports[0].created_at.isoformat() + "Z",
+        })
     out.sort(key=lambda x: (not x["hidden"], -x["report_count"]))   # auto-hidden ones first: they need a decision
     return jsonify({"items": out}), 200
 
@@ -105,6 +123,10 @@ def restore(kind, item_id):
     _, err = _admin()
     if err:
         return err
+    if kind == "user":
+        ContentReport.query.filter_by(kind="user", item_id=item_id).delete(synchronize_session=False)
+        db.session.commit()
+        return jsonify({"message": "Shikoyatlar yopildi."}), 200
     kind, item, err = _load(kind, item_id)
     if err:
         return err
