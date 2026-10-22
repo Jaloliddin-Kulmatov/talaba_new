@@ -13,23 +13,32 @@ jwt = JWTManager()
 bcrypt = Bcrypt()
 
 
+def normalize_db_url(url: str) -> str:
+    """Hosts hand out postgres:// or postgresql://; we always want the psycopg2 driver explicitly.
+
+    SQLAlchemy 2.1 changed the default driver for postgresql:// to psycopg (v3), which is not installed here —
+    the service then crashes at boot with "No module named 'psycopg'". Naming the driver avoids that.
+    """
+    url = (url or "").strip()
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://"):]
+    if url.startswith("postgresql://"):
+        url = "postgresql+psycopg2://" + url[len("postgresql://"):]
+    return url
+
+
 def create_app():
     app = Flask(__name__)
 
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
     app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "jwt-secret-change-me")
-    # Render gives postgres:// but SQLAlchemy needs postgresql://
-    db_url = os.environ.get("DATABASE_URL", "sqlite:///talaba.db")
-    if db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    db_url = normalize_db_url(os.environ.get("DATABASE_URL", "sqlite:///talaba.db"))
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
-    if db_url.startswith("postgresql://"):
-        app.config["SQLALCHEMY_POOL_SIZE"] = 5
-        app.config["SQLALCHEMY_MAX_OVERFLOW"] = 10
-        app.config["SQLALCHEMY_POOL_RECYCLE"] = 300
-        app.config["SQLALCHEMY_POOL_TIMEOUT"] = 20
+    engine_options = {"pool_pre_ping": True}
+    if db_url.startswith("postgresql"):
+        engine_options.update(pool_size=5, max_overflow=10, pool_recycle=300, pool_timeout=20)
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = engine_options
     # Tokens expire after 30 days for every auth path (email/password AND Google),
     # so a leaked token can't grant access forever. Override per-token with
     # expires_delta if a specific flow needs a different lifetime.
